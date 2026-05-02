@@ -19,8 +19,14 @@ export default function LoginPage() {
   const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   const isAdmin = form.email.trim().toLowerCase() === ADMIN_EMAIL;
-  // Show reCAPTCHA (and hide QR) once name + email are both filled in
-  const showCaptcha = form.name.trim().length > 0 && form.email.trim().length > 0;
+  // Show reCAPTCHA only when all fields are fully valid
+  const nameValid = (() => {
+    const parts = form.name.trim().split(/\s+/).filter(Boolean);
+    return parts.length >= 2 && parts.every((p) => p.length >= 2);
+  })();
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim());
+  const pinValid = !isAdmin || form.pin.trim().length > 0;
+  const showCaptcha = nameValid && emailValid && pinValid;
 
   function validate() {
     const errs: Record<string, string> = {};
