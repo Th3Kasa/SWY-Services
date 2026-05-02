@@ -194,37 +194,39 @@ export default function LoginPage() {
           </p>
 
           {/* Bottom section — QR code fades out, reCAPTCHA fades in */}
-          <div className="mt-6 pt-5 border-t border-stone-100 flex flex-col items-center min-h-[220px] justify-center">
+          <div className="mt-6 pt-5 border-t border-stone-100 flex flex-col items-center gap-3">
             <AnimatePresence mode="wait">
               {showCaptcha ? (
                 <motion.div
                   key="captcha"
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.3 }}
-                  className="flex flex-col items-center gap-2"
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.25 }}
+                  className="flex flex-col items-center gap-3 w-full"
                 >
-                  <p className="text-xs text-stone-500 mb-2 text-center font-medium">
-                    ✅ One last step — prove you&apos;re human
+                  <p className="text-xs text-stone-500 text-center font-medium">
+                    One last step — prove you&apos;re human 👇
                   </p>
-                  <ReCAPTCHA
-                    ref={recaptchaRef}
-                    sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
-                    onChange={(token) => setCaptchaToken(token)}
-                    onExpired={() => setCaptchaToken(null)}
-                  />
+                  <div className="flex justify-center">
+                    <ReCAPTCHA
+                      ref={recaptchaRef}
+                      sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+                      onChange={(token) => setCaptchaToken(token)}
+                      onExpired={() => setCaptchaToken(null)}
+                    />
+                  </div>
                 </motion.div>
               ) : (
                 <motion.div
                   key="qrcode"
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.3 }}
-                  className="flex flex-col items-center"
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.25 }}
+                  className="flex flex-col items-center gap-3"
                 >
-                  <p className="text-xs text-stone-500 mb-3 text-center font-medium">
+                  <p className="text-xs text-stone-500 text-center font-medium">
                     📱 Scan to open on your phone
                   </p>
                   <div className="rounded-2xl bg-white border-2 border-amber-200 p-3 shadow-sm">
