@@ -18,6 +18,7 @@ type User = {
   email: string;
   created_at: string;
   is_admin: boolean;
+  pin_hash: string | null;
 };
 
 type Entry = {
@@ -160,6 +161,21 @@ export function AdminClient({ adminName, userNames }: { adminName: string; userN
     const json = await res.json();
     setAdminActionId(null);
     if (!res.ok) { alert(json.error); return; }
+    fetchUsers();
+  }
+
+  async function handleResendInvite(id: string, name: string) {
+    setAdminActionId(id);
+    const res = await fetch(`/api/admin/users/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resendInvite: true }),
+    });
+    const json = await res.json();
+    setAdminActionId(null);
+    if (!res.ok && res.status !== 207) { alert(json.error); return; }
+    if (res.status === 207) { alert(json.error); return; }
+    alert(`Invite email resent to ${name}.`);
     fetchUsers();
   }
 
@@ -512,7 +528,19 @@ export function AdminClient({ adminName, userNames }: { adminName: string; userN
                                   ) : (
                                     <div className="flex items-center gap-3 justify-end">
                                       {user.is_admin && (
-                                        <span className="text-xs bg-violet-100 text-violet-700 font-semibold px-2 py-0.5 rounded-full">Admin</span>
+                                        <>
+                                          <span className="text-xs bg-violet-100 text-violet-700 font-semibold px-2 py-0.5 rounded-full">Admin</span>
+                                          {!user.pin_hash && (
+                                            <button
+                                              onClick={() => handleResendInvite(user.id, user.full_name)}
+                                              disabled={adminActionId === user.id}
+                                              className="text-xs text-stone-400 hover:text-stone-600 font-medium transition-colors disabled:opacity-50"
+                                              title="PIN not set yet — resend invite email"
+                                            >
+                                              {adminActionId === user.id ? '…' : 'Resend Invite'}
+                                            </button>
+                                          )}
+                                        </>
                                       )}
                                       <button
                                         onClick={() => startEditUser(user)}
