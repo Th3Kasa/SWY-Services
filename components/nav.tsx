@@ -3,8 +3,9 @@
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { LogOut, Menu, X, LayoutDashboard, BookOpen } from 'lucide-react';
+import { LogOut, Menu, X, LayoutDashboard, BookOpen, CalendarDays } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 
 interface NavProps {
   userName: string;
@@ -23,6 +24,7 @@ export function Nav({ userName }: NavProps) {
 
   const links = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/calendar', label: 'Calendar', icon: CalendarDays },
     { href: '/my-entries', label: 'My Entries', icon: BookOpen },
   ];
 
@@ -34,8 +36,8 @@ export function Nav({ userName }: NavProps) {
           href="/"
           className="flex items-center gap-2 text-lg font-bold text-stone-900 hover:text-amber-600 transition-colors"
         >
-          <span className="text-2xl">⛪</span>
-          <span className="hidden sm:inline">St Wanas</span>
+          <Image src="/st-wanas-icon.png" alt="St Wanas" width={32} height={32} className="rounded-full object-cover bg-amber-50" />
+          <span className="hidden sm:inline">St Wanas Youth</span>
         </Link>
 
         {/* Desktop nav */}

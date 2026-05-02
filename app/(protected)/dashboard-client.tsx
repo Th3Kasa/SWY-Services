@@ -40,10 +40,10 @@ export function DashboardClient({ services, counts }: DashboardClientProps) {
         className="mb-6 sm:mb-8"
       >
         <h1 className="text-2xl sm:text-3xl font-bold text-stone-900">
-          Services Dashboard
+          St Wanas Youth Services
         </h1>
         <p className="text-stone-500 mt-1 text-sm sm:text-base">
-          All 7 recurring youth group services. Tap a card to view and add entries.
+          All 7 recurring youth services. Tap a card to view and add entries.
         </p>
       </motion.div>
 

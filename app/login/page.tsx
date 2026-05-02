@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -70,11 +71,17 @@ export default function LoginPage() {
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.1, ease: 'easeOut' }}
-            className="text-6xl mb-4"
+            className="flex justify-center mb-4"
           >
-            ⛪
+            <Image
+              src="/st-wanas-icon.png"
+              alt="St Wanas"
+              width={96}
+              height={96}
+              className="rounded-full object-cover shadow-md bg-amber-50"
+            />
           </motion.div>
-          <h1 className="text-2xl font-bold text-stone-900">St Wanas Services</h1>
+          <h1 className="text-2xl font-bold text-stone-900">St Wanas Youth Services</h1>
           <p className="text-stone-500 mt-1 text-sm">Youth Group Scheduling</p>
         </div>
 
