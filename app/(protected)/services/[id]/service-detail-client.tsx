@@ -16,10 +16,11 @@ import { useRouter } from 'next/navigation';
 interface ServiceDetailClientProps {
   service: ServiceConfig;
   initialEntries: ServiceEntry[];
+  submitterNames: Record<string, string>;
   userEmail: string;
 }
 
-export function ServiceDetailClient({ service, initialEntries, userEmail }: ServiceDetailClientProps) {
+export function ServiceDetailClient({ service, initialEntries, submitterNames, userEmail }: ServiceDetailClientProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const router = useRouter();
 
@@ -100,6 +101,7 @@ export function ServiceDetailClient({ service, initialEntries, userEmail }: Serv
         entries={upcoming}
         service={service}
         userEmail={userEmail}
+        submitterNames={submitterNames}
         emptyText="No upcoming entries yet. Add one!"
       />
 
@@ -111,6 +113,7 @@ export function ServiceDetailClient({ service, initialEntries, userEmail }: Serv
             entries={past}
             service={service}
             userEmail={userEmail}
+            submitterNames={submitterNames}
             emptyText=""
             muted
           />
@@ -126,12 +129,13 @@ export function ServiceDetailClient({ service, initialEntries, userEmail }: Serv
 }
 
 function Section({
-  title, entries, service, userEmail, emptyText, muted = false,
+  title, entries, service, userEmail, submitterNames, emptyText, muted = false,
 }: {
   title: string;
   entries: ServiceEntry[];
   service: ServiceConfig;
   userEmail: string;
+  submitterNames: Record<string, string>;
   emptyText: string;
   muted?: boolean;
 }) {
@@ -154,7 +158,7 @@ function Section({
         >
           <AnimatePresence>
             {entries.map((entry) => (
-              <EntryCard key={entry.id} entry={entry} service={service} userEmail={userEmail} muted={muted} />
+              <EntryCard key={entry.id} entry={entry} service={service} userEmail={userEmail} submitterName={submitterNames[entry.created_by_email]} muted={muted} />
             ))}
           </AnimatePresence>
         </motion.ul>
@@ -164,11 +168,12 @@ function Section({
 }
 
 function EntryCard({
-  entry, service, userEmail, muted,
+  entry, service, userEmail, submitterName, muted,
 }: {
   entry: ServiceEntry;
   service: ServiceConfig;
   userEmail: string;
+  submitterName: string | undefined;
   muted: boolean;
 }) {
   const router = useRouter();
@@ -253,9 +258,15 @@ function EntryCard({
               <FileText className="h-3.5 w-3.5 mt-0.5 text-stone-400 shrink-0" />
               <p className="text-sm font-semibold text-stone-900">{entry.what}</p>
             </div>
-            <div className="flex items-start gap-1.5">
+            <div className="flex items-start gap-1.5 mb-1">
               <Users className="h-3.5 w-3.5 mt-0.5 text-stone-400 shrink-0" />
               <p className="text-sm text-stone-600">{entry.team}</p>
+            </div>
+            <div className="flex items-center gap-1.5 ml-0.5">
+              <span className="text-xs text-stone-400">Posted by</span>
+              <span className="text-xs font-medium text-stone-500">
+                {submitterName ?? entry.created_by_email}
+              </span>
             </div>
           </div>
 
