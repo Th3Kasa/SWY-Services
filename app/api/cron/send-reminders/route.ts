@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServer } from '@/lib/supabase';
 import { getServiceById } from '@/lib/services';
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
 // GET /api/cron/send-reminders
 // Runs daily at 3pm AEST (5am UTC) via Vercel Cron.
 // Finds entries happening exactly 5 days from today,
@@ -52,7 +61,7 @@ export async function GET(req: NextRequest) {
         .eq('email', entry.created_by_email)
         .maybeSingle();
 
-      const submitterName = submitter?.full_name ?? entry.team;
+      const submitterName = escapeHtml(submitter?.full_name ?? entry.team);
 
       const formattedDate = new Date(entry.date + 'T00:00:00').toLocaleDateString('en-AU', {
         weekday: 'long',
@@ -69,10 +78,10 @@ export async function GET(req: NextRequest) {
         subject: `Reminder: ${service.name} is in 5 days`,
         html: buildSubmitterEmail({
           submitterName,
-          serviceName: service.name,
-          formattedDate,
-          team: entry.team,
-          what: entry.what,
+          serviceName: escapeHtml(service.name),
+          formattedDate: escapeHtml(formattedDate),
+          team: escapeHtml(entry.team),
+          what: escapeHtml(entry.what),
           serviceEmoji: service.iconEmoji,
         }),
       });
@@ -84,13 +93,13 @@ export async function GET(req: NextRequest) {
           to: service.leaderEmail,
           subject: `Follow-up needed: ${service.name} on ${formattedDate}`,
           html: buildLeaderEmail({
-            leaderName: service.leader,
+            leaderName: escapeHtml(service.leader),
             submitterName,
-            submitterEmail: entry.created_by_email,
-            serviceName: service.name,
-            formattedDate,
-            team: entry.team,
-            what: entry.what,
+            submitterEmail: escapeHtml(entry.created_by_email),
+            serviceName: escapeHtml(service.name),
+            formattedDate: escapeHtml(formattedDate),
+            team: escapeHtml(entry.team),
+            what: escapeHtml(entry.what),
             serviceEmoji: service.iconEmoji,
           }),
         });

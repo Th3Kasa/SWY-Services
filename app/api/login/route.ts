@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServer } from '@/lib/supabase';
 import { COOKIE_NAME, serializeAuthCookie } from '@/lib/auth';
 
+const ADMIN_EMAIL = 'basemmorkos98@gmail.com';
+
 function toTitleCase(str: string): string {
   return str.trim().toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 }
@@ -18,6 +20,15 @@ export async function POST(req: NextRequest) {
     }
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ error: 'A valid email is required' }, { status: 400 });
+    }
+
+    // Admin PIN check — only for the admin account
+    if (email === ADMIN_EMAIL) {
+      const pin = (body.pin as string)?.trim();
+      const adminPin = process.env.ADMIN_PIN;
+      if (!adminPin || pin !== adminPin) {
+        return NextResponse.json({ error: 'Incorrect PIN. Please try again.' }, { status: 403 });
+      }
     }
 
     const supabase = getSupabaseServer();
@@ -53,7 +64,7 @@ export async function POST(req: NextRequest) {
     response.cookies.set(COOKIE_NAME, cookieValue, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'strict',
       path: '/',
       maxAge: 60 * 60 * 24 * 30, // 30 days
     });

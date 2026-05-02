@@ -1,16 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServer } from '@/lib/supabase';
-import { COOKIE_NAME, AuthUser } from '@/lib/auth';
+import { COOKIE_NAME, getAuthUserFromCookie, AuthUser } from '@/lib/auth';
 
 function getUser(req: NextRequest): AuthUser | null {
   const raw = req.cookies.get(COOKIE_NAME)?.value;
-  if (!raw) return null;
-  try {
-    const u = JSON.parse(raw) as AuthUser;
-    return u.email ? u : null;
-  } catch {
-    return null;
-  }
+  return getAuthUserFromCookie(raw);
 }
 
 // PATCH /api/entries/[id] — edit team + what (submitter only)

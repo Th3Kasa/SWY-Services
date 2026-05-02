@@ -7,11 +7,14 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
+const ADMIN_EMAIL = 'basemmorkos98@gmail.com';
+
 export default function LoginPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ name: '', email: '' });
+  const [form, setForm] = useState({ name: '', email: '', pin: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const isAdmin = form.email.trim().toLowerCase() === ADMIN_EMAIL;
 
   function validate() {
     const errs: Record<string, string> = {};
@@ -50,7 +53,7 @@ export default function LoginPage() {
       const res = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: form.name.trim(), email: form.email.trim().toLowerCase() }),
+        body: JSON.stringify({ name: form.name.trim(), email: form.email.trim().toLowerCase(), ...(isAdmin && { pin: form.pin }) }),
       });
 
       if (!res.ok) {
@@ -129,6 +132,18 @@ export default function LoginPage() {
               onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
               error={errors.email}
             />
+            {isAdmin && (
+              <Input
+                label="Admin PIN"
+                type="password"
+                placeholder="Enter your PIN"
+                required
+                autoComplete="current-password"
+                value={form.pin}
+                onChange={(e) => setForm((f) => ({ ...f, pin: e.target.value }))}
+                error={errors.submit?.includes('PIN') ? errors.submit : undefined}
+              />
+            )}
 
             {errors.submit && (
               <div className="rounded-xl bg-rose-50 border border-rose-200 px-4 py-3 text-sm text-rose-700">

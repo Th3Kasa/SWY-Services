@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServer } from '@/lib/supabase';
-import { COOKIE_NAME, AuthUser } from '@/lib/auth';
+import { COOKIE_NAME, getAuthUserFromCookie, AuthUser } from '@/lib/auth';
 
 const ADMIN_EMAIL = 'basemmorkos98@gmail.com';
 
 function getAdminUser(req: NextRequest): AuthUser | null {
-  try {
-    const raw = req.cookies.get(COOKIE_NAME)?.value;
-    if (!raw) return null;
-    const user = JSON.parse(raw) as AuthUser;
-    if (user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) return null;
-    return user;
-  } catch {
-    return null;
-  }
+  const raw = req.cookies.get(COOKIE_NAME)?.value;
+  const user = getAuthUserFromCookie(raw);
+  if (!user || user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) return null;
+  return user;
 }
 
 // PATCH /api/admin/users/[id] — edit user name and/or email
