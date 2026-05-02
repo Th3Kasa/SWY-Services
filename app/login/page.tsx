@@ -100,7 +100,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
             <Input
               label="Full Name"
-              placeholder="e.g. Simon Coptic"
+              placeholder="e.g. John Smith"
               required
               autoComplete="name"
               value={form.name}
