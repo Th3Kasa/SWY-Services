@@ -622,6 +622,9 @@ export function AdminClient({ adminName, userNames }: { adminName: string; userN
           <div className="max-w-md space-y-6">
             <h2 className="text-lg font-semibold text-stone-800">Admin Settings</h2>
 
+            {/* Test email */}
+            <TestEmailCard />
+
             {/* Change PIN */}
             <div className="bg-white rounded-xl border border-stone-200 p-5">
               <h3 className="text-sm font-semibold text-stone-700 mb-1">Change Admin PIN</h3>
@@ -674,6 +677,41 @@ export function AdminClient({ adminName, userNames }: { adminName: string; userN
           </div>
         )}
       </main>
+    </div>
+  );
+}
+
+function TestEmailCard() {
+  const [status, setStatus] = useState<'idle' | 'sending' | 'ok' | 'error'>('idle');
+  const [message, setMessage] = useState('');
+
+  async function handleTest() {
+    setStatus('sending');
+    setMessage('');
+    const res = await fetch('/api/admin/test-email', { method: 'POST' });
+    const json = await res.json();
+    if (res.ok) {
+      setStatus('ok');
+      setMessage('Test email sent! Check your inbox.');
+    } else {
+      setStatus('error');
+      setMessage(json.error ?? 'Unknown error');
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-stone-200 p-5">
+      <h3 className="text-sm font-semibold text-stone-700 mb-1">Email Connection</h3>
+      <p className="text-xs text-stone-400 mb-4">Send a test email to yourself to confirm Resend is correctly configured.</p>
+      <button
+        onClick={handleTest}
+        disabled={status === 'sending'}
+        className="bg-stone-800 hover:bg-stone-900 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+      >
+        {status === 'sending' ? 'Sending…' : 'Send Test Email'}
+      </button>
+      {status === 'ok' && <p className="text-green-600 text-xs font-medium mt-3">✅ {message}</p>}
+      {status === 'error' && <p className="text-red-500 text-xs mt-3">❌ {message}</p>}
     </div>
   );
 }
