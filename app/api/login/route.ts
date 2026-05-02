@@ -23,6 +23,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'A valid email is required' }, { status: 400 });
     }
 
+    // Verify reCAPTCHA token
+    const captchaToken = (body.captchaToken as string)?.trim();
+    if (!captchaToken) {
+      return NextResponse.json({ error: 'Please complete the reCAPTCHA.' }, { status: 400 });
+    }
+    const captchaRes = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${captchaToken}`,
+    });
+    const captchaData = await captchaRes.json();
+    if (!captchaData.success) {
+      return NextResponse.json({ error: 'reCAPTCHA verification failed. Please try again.' }, { status: 400 });
+    }
+
     // Admin PIN check — only for the admin account
     if (email === ADMIN_EMAIL) {
       const pin = (body.pin as string)?.trim();

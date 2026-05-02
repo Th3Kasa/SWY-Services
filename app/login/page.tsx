@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
+import ReCAPTCHA from 'react-google-recaptcha';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -14,6 +15,8 @@ export default function LoginPage() {
   const [form, setForm] = useState({ name: '', email: '', pin: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
   const isAdmin = form.email.trim().toLowerCase() === ADMIN_EMAIL;
 
   function validate() {
@@ -22,7 +25,6 @@ export default function LoginPage() {
     if (!trimmed) {
       errs.name = 'Full name is required';
     } else {
-      // Must have at least 2 words (first + last), each ≥ 2 letters
       const parts = trimmed.split(/\s+/).filter(Boolean);
       if (parts.length < 2) {
         errs.name = 'Please enter both your first and last name';
@@ -45,6 +47,10 @@ export default function LoginPage() {
       setErrors(errs);
       return;
     }
+    if (!captchaToken) {
+      setErrors({ submit: 'Please complete the reCAPTCHA.' });
+      return;
+    }
 
     setLoading(true);
     setErrors({});
@@ -53,12 +59,19 @@ export default function LoginPage() {
       const res = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: form.name.trim(), email: form.email.trim().toLowerCase(), ...(isAdmin && { pin: form.pin }) }),
+        body: JSON.stringify({
+          name: form.name.trim(),
+          email: form.email.trim().toLowerCase(),
+          captchaToken,
+          ...(isAdmin && { pin: form.pin }),
+        }),
       });
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         setErrors({ submit: data.error || 'Something went wrong. Please try again.' });
+        recaptchaRef.current?.reset();
+        setCaptchaToken(null);
         return;
       }
 
@@ -66,6 +79,8 @@ export default function LoginPage() {
       router.refresh();
     } catch {
       setErrors({ submit: 'Network error. Please check your connection.' });
+      recaptchaRef.current?.reset();
+      setCaptchaToken(null);
     } finally {
       setLoading(false);
     }
@@ -145,13 +160,29 @@ export default function LoginPage() {
               />
             )}
 
+            {/* reCAPTCHA */}
+            <div className="flex justify-center">
+              <ReCAPTCHA
+                ref={recaptchaRef}
+                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+                onChange={(token) => setCaptchaToken(token)}
+                onExpired={() => setCaptchaToken(null)}
+              />
+            </div>
+
             {errors.submit && (
               <div className="rounded-xl bg-rose-50 border border-rose-200 px-4 py-3 text-sm text-rose-700">
                 {errors.submit}
               </div>
             )}
 
-            <Button type="submit" isLoading={loading} size="lg" className="w-full mt-1">
+            <Button
+              type="submit"
+              isLoading={loading}
+              size="lg"
+              className="w-full mt-1"
+              disabled={!captchaToken || loading}
+            >
               Sign In
             </Button>
           </form>
@@ -163,7 +194,7 @@ export default function LoginPage() {
             Having trouble? Speak to <span className="font-semibold text-stone-500">Basem</span> for help.
           </p>
 
-          {/* QR code — for screen-share onboarding */}
+          {/* QR code */}
           <div className="mt-6 pt-5 border-t border-stone-100 flex flex-col items-center">
             <p className="text-xs text-stone-500 mb-3 text-center font-medium">
               📱 Scan to open on your phone
