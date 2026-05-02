@@ -16,8 +16,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'A valid email is required' }, { status: 400 });
     }
 
-    // Upsert user into DB
     const supabase = getSupabaseServer();
+
+    // Check if email is already registered to a different name
+    const { data: existing } = await supabase
+      .from('users')
+      .select('full_name')
+      .eq('email', email)
+      .maybeSingle();
+
+    if (existing && existing.full_name.toLowerCase() !== name.toLowerCase()) {
+      return NextResponse.json(
+        { error: `This email is already registered to ${existing.full_name}. Please use your own email address.` },
+        { status: 409 }
+      );
+    }
+
+    // Upsert user into DB (safe — same email+name = returning user)
     const { error } = await supabase.from('users').upsert(
       { full_name: name, email },
       { onConflict: 'email', ignoreDuplicates: false }
