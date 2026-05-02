@@ -135,6 +135,24 @@ export default function LoginPage() {
           <p className="text-center text-xs text-stone-400 mt-2 leading-relaxed">
             Having trouble? Speak to <span className="font-semibold text-stone-500">Basem</span> for help.
           </p>
+
+          {/* QR code — for screen-share onboarding */}
+          <div className="mt-6 pt-5 border-t border-stone-100 flex flex-col items-center">
+            <p className="text-xs text-stone-500 mb-3 text-center font-medium">
+              📱 Scan to open on your phone
+            </p>
+            <div className="rounded-2xl bg-white border-2 border-amber-200 p-3 shadow-sm">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=0&data=https%3A%2F%2Fswy-services.vercel.app%2F"
+                alt="Scan to open swy-services.vercel.app"
+                width={180}
+                height={180}
+                className="block"
+              />
+            </div>
+            <p className="text-[11px] text-stone-400 mt-2 font-mono">swy-services.vercel.app</p>
+          </div>
         </motion.div>
       </motion.div>
     </div>

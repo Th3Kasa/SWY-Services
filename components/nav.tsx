@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { LogOut, Menu, X, LayoutDashboard, BookOpen, CalendarDays, Settings2 } from 'lucide-react';
+import { LogOut, Menu, X, LayoutDashboard, BookOpen, CalendarDays, Settings2, HelpCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 
@@ -29,6 +29,7 @@ export function Nav({ userName, userEmail }: NavProps) {
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/calendar', label: 'Calendar', icon: CalendarDays },
     { href: '/my-entries', label: 'My Entries', icon: BookOpen },
+    { href: '/help', label: 'Help', icon: HelpCircle },
   ];
 
   return (
