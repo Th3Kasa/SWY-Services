@@ -1,12 +1,24 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 
 type Status = 'loading' | 'invalid' | 'ready' | 'success';
 
 export default function SetupAdminPinPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-stone-50 flex items-center justify-center">
+        <p className="text-stone-400 text-sm">Loading…</p>
+      </div>
+    }>
+      <SetupAdminPinInner />
+    </Suspense>
+  );
+}
+
+function SetupAdminPinInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get('token') ?? '';
