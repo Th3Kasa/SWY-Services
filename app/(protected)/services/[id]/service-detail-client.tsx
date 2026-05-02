@@ -81,6 +81,19 @@ export function ServiceDetailClient({ service, initialEntries, userEmail }: Serv
       {/* Divider with color */}
       <div className={`h-1 rounded-full ${service.colorClass} mb-6 opacity-60`} />
 
+      {/* Bible verse */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.15 }}
+        className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-center"
+      >
+        <p className="text-sm sm:text-base font-semibold text-amber-900 italic leading-relaxed mb-1">
+          &ldquo;{service.verse.text}&rdquo;
+        </p>
+        <p className="text-xs text-amber-700 font-medium">— {service.verse.ref}</p>
+      </motion.div>
+
       {/* Upcoming entries */}
       <Section
         title="Upcoming"
