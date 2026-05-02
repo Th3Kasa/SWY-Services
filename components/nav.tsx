@@ -3,15 +3,18 @@
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { LogOut, Menu, X, LayoutDashboard, BookOpen, CalendarDays } from 'lucide-react';
+import { LogOut, Menu, X, LayoutDashboard, BookOpen, CalendarDays, Settings2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 
+const ADMIN_EMAIL = 'basemmorkos98@gmail.com';
+
 interface NavProps {
   userName: string;
+  userEmail: string;
 }
 
-export function Nav({ userName }: NavProps) {
+export function Nav({ userName, userEmail }: NavProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -56,6 +59,19 @@ export function Nav({ userName }: NavProps) {
               {label}
             </Link>
           ))}
+          {userEmail.toLowerCase() === ADMIN_EMAIL && (
+            <Link
+              href="/admin"
+              className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
+                pathname === '/admin'
+                  ? 'bg-amber-100 text-amber-700'
+                  : 'text-stone-400 hover:bg-stone-100 hover:text-stone-600'
+              }`}
+            >
+              <Settings2 className="h-4 w-4" />
+              Admin
+            </Link>
+          )}
         </nav>
 
         {/* Right side */}
@@ -111,6 +127,20 @@ export function Nav({ userName }: NavProps) {
                   {label}
                 </Link>
               ))}
+              {userEmail.toLowerCase() === ADMIN_EMAIL && (
+                <Link
+                  href="/admin"
+                  onClick={() => setMenuOpen(false)}
+                  className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
+                    pathname === '/admin'
+                      ? 'bg-amber-100 text-amber-700'
+                      : 'text-stone-400 hover:bg-stone-100 hover:text-stone-600'
+                  }`}
+                >
+                  <Settings2 className="h-4 w-4" />
+                  Admin
+                </Link>
+              )}
               <button
                 onClick={handleSignOut}
                 className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium text-rose-500 hover:bg-rose-50"
