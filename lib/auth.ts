@@ -6,6 +6,7 @@ const COOKIE_NAME = 'swy_user';
 export type AuthUser = {
   name: string;
   email: string;
+  isAdmin?: boolean;
 };
 
 function getSecret(): string {

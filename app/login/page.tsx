@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
@@ -8,17 +8,27 @@ import ReCAPTCHA from 'react-google-recaptcha';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-const ADMIN_EMAIL = 'basemmorkos98@gmail.com';
-
 export default function LoginPage() {
   const router = useRouter();
   const [form, setForm] = useState({ name: '', email: '', pin: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
 
-  const isAdmin = form.email.trim().toLowerCase() === ADMIN_EMAIL;
+  // Check if the entered email belongs to an admin (to show PIN field)
+  useEffect(() => {
+    const email = form.email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setIsAdmin(false); return; }
+    let cancelled = false;
+    fetch(`/api/check-admin?email=${encodeURIComponent(email)}`)
+      .then(r => r.json())
+      .then(d => { if (!cancelled) setIsAdmin(d.isAdmin === true); })
+      .catch(() => { if (!cancelled) setIsAdmin(false); });
+    return () => { cancelled = true; };
+  }, [form.email]);
+
   // Show reCAPTCHA only when all fields are fully valid
   const nameValid = (() => {
     const parts = form.name.trim().split(/\s+/).filter(Boolean);

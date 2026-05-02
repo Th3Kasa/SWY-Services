@@ -1,19 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServer } from '@/lib/supabase';
-import { COOKIE_NAME, getAuthUserFromCookie, AuthUser } from '@/lib/auth';
+import { COOKIE_NAME, getAuthUserFromCookie } from '@/lib/auth';
 
-const ADMIN_EMAIL = 'basemmorkos98@gmail.com';
-
-function getAdminUser(req: NextRequest): AuthUser | null {
+function isAdmin(req: NextRequest): boolean {
   const raw = req.cookies.get(COOKIE_NAME)?.value;
-  const user = getAuthUserFromCookie(raw);
-  if (!user || user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) return null;
-  return user;
+  return getAuthUserFromCookie(raw)?.isAdmin === true;
 }
 
 // GET /api/admin/users — list all users
 export async function GET(req: NextRequest) {
-  if (!getAdminUser(req)) {
+  if (!isAdmin(req)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -29,7 +25,7 @@ export async function GET(req: NextRequest) {
 
 // POST /api/admin/users — add a user
 export async function POST(req: NextRequest) {
-  if (!getAdminUser(req)) {
+  if (!isAdmin(req)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

@@ -17,6 +17,7 @@ type User = {
   full_name: string;
   email: string;
   created_at: string;
+  is_admin: boolean;
 };
 
 type Entry = {
@@ -45,6 +46,7 @@ export function AdminClient({ adminName, userNames }: { adminName: string; userN
   const [editUserForm, setEditUserForm] = useState<{ full_name: string; email: string }>({ full_name: '', email: '' });
   const [editUserError, setEditUserError] = useState('');
   const [editUserLoading, setEditUserLoading] = useState(false);
+  const [adminActionId, setAdminActionId] = useState<string | null>(null);
 
   // ── PIN change state ─────────────────────────────────────────────────────────
   const [pinForm, setPinForm] = useState({ current: '', next: '', confirm: '' });
@@ -129,6 +131,35 @@ export function AdminClient({ adminName, userNames }: { adminName: string; userN
   async function handleDeleteUser(id: string, name: string) {
     if (!confirm(`Remove user "${name}"? This does not delete their entries.`)) return;
     await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+    fetchUsers();
+  }
+
+  // ── Make / remove admin ───────────────────────────────────────────────────────
+  async function handleMakeAdmin(id: string, name: string) {
+    if (!confirm(`Make "${name}" an admin? They'll receive an email to set their PIN.`)) return;
+    setAdminActionId(id);
+    const res = await fetch(`/api/admin/users/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ makeAdmin: true }),
+    });
+    const json = await res.json();
+    setAdminActionId(null);
+    if (!res.ok) { alert(json.error); return; }
+    fetchUsers();
+  }
+
+  async function handleRemoveAdmin(id: string, name: string) {
+    if (!confirm(`Remove admin access from "${name}"? Their PIN will be cleared.`)) return;
+    setAdminActionId(id);
+    const res = await fetch(`/api/admin/users/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ removeAdmin: true }),
+    });
+    const json = await res.json();
+    setAdminActionId(null);
+    if (!res.ok) { alert(json.error); return; }
     fetchUsers();
   }
 
@@ -477,15 +508,35 @@ export function AdminClient({ adminName, userNames }: { adminName: string; userN
                                 </td>
                                 <td className="px-4 py-3 text-right">
                                   {user.email.toLowerCase() === 'basemmorkos98@gmail.com' ? (
-                                    <span className="text-xs text-amber-600 font-medium">Admin</span>
+                                    <span className="text-xs bg-amber-100 text-amber-700 font-semibold px-2 py-0.5 rounded-full">Super Admin</span>
                                   ) : (
                                     <div className="flex items-center gap-3 justify-end">
+                                      {user.is_admin && (
+                                        <span className="text-xs bg-violet-100 text-violet-700 font-semibold px-2 py-0.5 rounded-full">Admin</span>
+                                      )}
                                       <button
                                         onClick={() => startEditUser(user)}
                                         className="text-xs text-amber-600 hover:text-amber-800 font-medium transition-colors"
                                       >
                                         Edit
                                       </button>
+                                      {user.is_admin ? (
+                                        <button
+                                          onClick={() => handleRemoveAdmin(user.id, user.full_name)}
+                                          disabled={adminActionId === user.id}
+                                          className="text-xs text-violet-500 hover:text-violet-700 font-medium transition-colors disabled:opacity-50"
+                                        >
+                                          {adminActionId === user.id ? '…' : 'Remove Admin'}
+                                        </button>
+                                      ) : (
+                                        <button
+                                          onClick={() => handleMakeAdmin(user.id, user.full_name)}
+                                          disabled={adminActionId === user.id}
+                                          className="text-xs text-violet-600 hover:text-violet-800 font-medium transition-colors disabled:opacity-50"
+                                        >
+                                          {adminActionId === user.id ? '…' : 'Make Admin'}
+                                        </button>
+                                      )}
                                       <button
                                         onClick={() => handleDeleteUser(user.id, user.full_name)}
                                         className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors"

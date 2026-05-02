@@ -38,37 +38,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'reCAPTCHA verification failed. Please try again.' }, { status: 400 });
     }
 
-    // Admin PIN check — only for the admin account
-    if (email === ADMIN_EMAIL) {
-      const pin = (body.pin as string)?.trim();
-      if (!pin) {
-        return NextResponse.json({ error: 'Incorrect PIN. Please try again.' }, { status: 403 });
-      }
-      const supabaseForPin = getSupabaseServer();
-      const { data: settings } = await supabaseForPin
-        .from('admin_settings')
-        .select('pin_hash')
-        .eq('id', 'singleton')
-        .maybeSingle();
-
-      let valid = false;
-      if (settings?.pin_hash) {
-        valid = verifyPin(pin, settings.pin_hash);
-      } else {
-        // Fallback to env var (plain comparison) before any PIN has been set via the app
-        valid = pin === process.env.ADMIN_PIN;
-      }
-      if (!valid) {
-        return NextResponse.json({ error: 'Incorrect PIN. Please try again.' }, { status: 403 });
-      }
-    }
-
     const supabase = getSupabaseServer();
 
-    // Check if email is already registered to a different name
+    // Fetch existing user record (name + admin status + pin)
     const { data: existing } = await supabase
       .from('users')
-      .select('full_name')
+      .select('full_name, is_admin, pin_hash')
       .eq('email', email)
       .maybeSingle();
 
@@ -77,6 +52,46 @@ export async function POST(req: NextRequest) {
         { error: 'Wrong information. Please check your name and email and try again.' },
         { status: 409 }
       );
+    }
+
+    // Determine if this user is an admin
+    const isDbAdmin = existing?.is_admin === true;
+    const isAdminUser = email === ADMIN_EMAIL || isDbAdmin;
+
+    // PIN check for any admin
+    if (isAdminUser) {
+      const pin = (body.pin as string)?.trim();
+      if (!pin) {
+        return NextResponse.json({ error: 'Incorrect PIN. Please try again.' }, { status: 403 });
+      }
+
+      if (email === ADMIN_EMAIL) {
+        // Hardcoded super-admin — check admin_settings table first, then env fallback
+        const supabaseForPin = getSupabaseServer();
+        const { data: settings } = await supabaseForPin
+          .from('admin_settings')
+          .select('pin_hash')
+          .eq('id', 'singleton')
+          .maybeSingle();
+
+        let valid = false;
+        if (settings?.pin_hash) {
+          valid = verifyPin(pin, settings.pin_hash);
+        } else {
+          valid = pin === process.env.ADMIN_PIN;
+        }
+        if (!valid) {
+          return NextResponse.json({ error: 'Incorrect PIN. Please try again.' }, { status: 403 });
+        }
+      } else {
+        // DB admin — verify against their per-user pin_hash
+        if (!existing?.pin_hash) {
+          return NextResponse.json({ error: 'Admin PIN not set up yet. Check your email for the setup link.' }, { status: 403 });
+        }
+        if (!verifyPin(pin, existing.pin_hash)) {
+          return NextResponse.json({ error: 'Incorrect PIN. Please try again.' }, { status: 403 });
+        }
+      }
     }
 
     // Upsert user into DB (safe — same email+name = returning user)
@@ -90,8 +105,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Database error. Please try again.' }, { status: 500 });
     }
 
-    // Set cookie
-    const cookieValue = serializeAuthCookie({ name, email });
+    // Set cookie (include isAdmin so the admin layout gate works without a DB call)
+    const cookieValue = serializeAuthCookie({ name, email, ...(isAdminUser && { isAdmin: true }) });
     const response = NextResponse.json({ ok: true });
     response.cookies.set(COOKIE_NAME, cookieValue, {
       httpOnly: true,

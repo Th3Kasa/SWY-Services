@@ -1,20 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServer } from '@/lib/supabase';
-import { COOKIE_NAME, getAuthUserFromCookie, AuthUser } from '@/lib/auth';
+import { COOKIE_NAME, getAuthUserFromCookie } from '@/lib/auth';
 import { getServiceById } from '@/lib/services';
 
-const ADMIN_EMAIL = 'basemmorkos98@gmail.com';
-
-function getAdminUser(req: NextRequest): AuthUser | null {
+function isAdmin(req: NextRequest): boolean {
   const raw = req.cookies.get(COOKIE_NAME)?.value;
-  const user = getAuthUserFromCookie(raw);
-  if (!user || user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) return null;
-  return user;
+  return getAuthUserFromCookie(raw)?.isAdmin === true;
 }
 
 // PATCH /api/admin/entries/[id] — edit an entry
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  if (!getAdminUser(req)) {
+  if (!isAdmin(req)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -66,7 +62,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
 // DELETE /api/admin/entries/[id]
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  if (!getAdminUser(req)) {
+  if (!isAdmin(req)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

@@ -5,8 +5,18 @@ create table if not exists users (
   id uuid primary key default gen_random_uuid(),
   full_name text not null,
   email text not null unique,
-  created_at timestamptz default now()
+  created_at timestamptz default now(),
+  is_admin boolean default false,
+  pin_hash text,
+  admin_invite_token text,
+  admin_invite_token_expires_at timestamptz
 );
+
+-- Migration: run these if upgrading an existing database
+-- alter table users add column if not exists is_admin boolean default false;
+-- alter table users add column if not exists pin_hash text;
+-- alter table users add column if not exists admin_invite_token text;
+-- alter table users add column if not exists admin_invite_token_expires_at timestamptz;
 
 create table if not exists service_entries (
   id uuid primary key default gen_random_uuid(),

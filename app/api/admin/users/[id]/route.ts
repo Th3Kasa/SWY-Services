@@ -1,58 +1,103 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServer } from '@/lib/supabase';
-import { COOKIE_NAME, getAuthUserFromCookie, AuthUser } from '@/lib/auth';
+import { COOKIE_NAME, getAuthUserFromCookie } from '@/lib/auth';
+import { randomBytes } from 'crypto';
 
-const ADMIN_EMAIL = 'basemmorkos98@gmail.com';
-
-function getAdminUser(req: NextRequest): AuthUser | null {
+function isAdmin(req: NextRequest): boolean {
   const raw = req.cookies.get(COOKIE_NAME)?.value;
   const user = getAuthUserFromCookie(raw);
-  if (!user || user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) return null;
-  return user;
+  return user?.isAdmin === true;
 }
 
-// PATCH /api/admin/users/[id] — edit user name and/or email
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  if (!getAdminUser(req)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+function escapeHtml(s: string) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+async function sendAdminInviteEmail(to: string, name: string, token: string): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://swy-services.vercel.app';
+  const setupUrl = `${appUrl}/setup-admin-pin?token=${token}`;
+
+  if (!apiKey) {
+    console.log(`[admin invite] DEV — would send to ${to}: ${setupUrl}`);
+    return;
   }
 
-  let body: { full_name?: string; email?: string };
+  const { Resend } = await import('resend');
+  const resend = new Resend(apiKey);
+  await resend.emails.send({
+    from,
+    to,
+    subject: 'You've been made an admin — set your PIN',
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;background:#fff;">
+        <h2 style="color:#1c1917;margin:0 0 8px;">Hi ${escapeHtml(name)} 👋</h2>
+        <p style="color:#57534e;margin:0 0 20px;">You've been granted admin access to the St Wanas Youth Services app.</p>
+        <p style="color:#57534e;margin:0 0 20px;">To complete your setup, click the button below and choose a 4-digit PIN. You'll use it every time you log in as an admin.</p>
+        <a href="${setupUrl}" style="display:inline-block;background:#f59e0b;color:#fff;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:12px;font-size:15px;">Set My Admin PIN →</a>
+        <p style="color:#a8a29e;font-size:12px;margin:28px 0 0;">This link expires in 24 hours. If you didn't expect this email, you can safely ignore it.</p>
+      </div>`,
+  });
+}
+
+// PATCH /api/admin/users/[id]
+// Body: { makeAdmin: true } | { removeAdmin: true }
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+  if (!isAdmin(req)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+  let body: { makeAdmin?: boolean; removeAdmin?: boolean };
   try { body = await req.json(); } catch {
     return NextResponse.json({ error: 'Invalid body.' }, { status: 400 });
   }
 
-  const updates: Record<string, string> = {};
-  if (body.full_name?.trim()) updates.full_name = body.full_name.trim();
-  if (body.email?.trim()) updates.email = body.email.trim().toLowerCase();
-
-  if (Object.keys(updates).length === 0) {
-    return NextResponse.json({ error: 'Nothing to update.' }, { status: 400 });
-  }
-
   const supabase = getSupabaseServer();
-  const { data, error } = await supabase
+
+  // Fetch the target user first
+  const { data: target, error: fetchErr } = await supabase
     .from('users')
-    .update(updates)
+    .select('id, full_name, email, is_admin, pin_hash')
     .eq('id', params.id)
-    .select()
     .single();
 
-  if (error) {
-    if (error.code === '23505') {
-      return NextResponse.json({ error: 'That email is already in use.' }, { status: 409 });
+  if (fetchErr || !target) return NextResponse.json({ error: 'User not found.' }, { status: 404 });
+
+  if (body.makeAdmin) {
+    // Generate invite token (valid 24h)
+    const token = randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+    const { error } = await supabase
+      .from('users')
+      .update({ is_admin: true, admin_invite_token: token, admin_invite_token_expires_at: expires })
+      .eq('id', params.id);
+
+    if (error) return NextResponse.json({ error: 'Failed to promote user.' }, { status: 500 });
+
+    // Only send invite email if they don't already have a PIN set up
+    if (!target.pin_hash) {
+      await sendAdminInviteEmail(target.email, target.full_name, token);
     }
-    return NextResponse.json({ error: 'Failed to update user.' }, { status: 500 });
+
+    return NextResponse.json({ success: true, inviteEmailSent: !target.pin_hash });
   }
 
-  return NextResponse.json({ user: data });
+  if (body.removeAdmin) {
+    const { error } = await supabase
+      .from('users')
+      .update({ is_admin: false, pin_hash: null, admin_invite_token: null, admin_invite_token_expires_at: null })
+      .eq('id', params.id);
+
+    if (error) return NextResponse.json({ error: 'Failed to demote user.' }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  return NextResponse.json({ error: 'Specify makeAdmin or removeAdmin.' }, { status: 400 });
 }
 
 // DELETE /api/admin/users/[id]
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  if (!getAdminUser(req)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+  if (!isAdmin(req)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const supabase = getSupabaseServer();
   const { error } = await supabase.from('users').delete().eq('id', params.id);
