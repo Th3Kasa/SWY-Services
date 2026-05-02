@@ -132,6 +132,9 @@ export default function LoginPage() {
           <p className="text-center text-xs text-stone-400 mt-4 leading-relaxed">
             No password needed. Your name and email identify you.
           </p>
+          <p className="text-center text-xs text-stone-400 mt-2 leading-relaxed">
+            Having trouble? Speak to <span className="font-semibold text-stone-500">Basem</span> for help.
+          </p>
         </motion.div>
       </motion.div>
     </div>
