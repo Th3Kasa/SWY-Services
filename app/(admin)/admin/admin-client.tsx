@@ -7,6 +7,11 @@ function toTitleCase(str: string) {
   return str.trim().toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
 }
 
+function formatDate(dateStr: string): string {
+  const [year, month, day] = dateStr.split('-');
+  return `${day}/${month}/${year}`;
+}
+
 type User = {
   id: string;
   full_name: string;
@@ -26,7 +31,7 @@ type Entry = {
 
 type Tab = 'users' | 'entries' | 'settings';
 
-export function AdminClient({ adminName }: { adminName: string }) {
+export function AdminClient({ adminName, userNames }: { adminName: string; userNames: Record<string, string> }) {
   const [tab, setTab] = useState<Tab>('entries');
 
   // ── Users state ─────────────────────────────────────────────────────────────
@@ -299,7 +304,7 @@ export function AdminClient({ adminName }: { adminName: string }) {
                                     className="border border-stone-200 rounded px-2 py-1 text-sm w-full focus:outline-none focus:ring-2 focus:ring-amber-400"
                                   />
                                 </td>
-                                <td className="px-4 py-2 text-stone-400 text-xs">{entry.created_by_email}</td>
+                                <td className="px-4 py-2 text-stone-400 text-xs">{userNames[entry.created_by_email] ?? 'Unknown'}</td>
                                 <td className="px-4 py-2">
                                   <div className="flex items-center gap-2 justify-end">
                                     <button
@@ -321,13 +326,13 @@ export function AdminClient({ adminName }: { adminName: string }) {
                             ) : (
                               // ── Read row ──────────────────────────────────────
                               <>
-                                <td className="px-4 py-3 text-stone-700 whitespace-nowrap">{entry.date}</td>
+                                <td className="px-4 py-3 text-stone-700 whitespace-nowrap">{formatDate(entry.date)}</td>
                                 <td className="px-4 py-3">
                                   <span className="text-stone-700">{serviceName(entry.service_id)}</span>
                                 </td>
                                 <td className="px-4 py-3 text-stone-600 max-w-[160px] truncate">{entry.team}</td>
                                 <td className="px-4 py-3 text-stone-600 max-w-[200px] truncate">{entry.what}</td>
-                                <td className="px-4 py-3 text-stone-400 text-xs">{entry.created_by_email}</td>
+                                <td className="px-4 py-3 text-stone-600">{userNames[entry.created_by_email] ?? 'Unknown'}</td>
                                 <td className="px-4 py-3">
                                   <div className="flex items-center gap-2 justify-end">
                                     <button
