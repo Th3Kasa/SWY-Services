@@ -86,7 +86,7 @@ export const SERVICES: ServiceConfig[] = [
   },
   {
     id: 'cleaning',
-    name: 'Cleaning',
+    name: 'Church Cleaning',
     leader: 'Daniel & Manuela',
     leaderEmail: 'manuela.gobran@gmail.com',
     frequency: 'Every 2 months',
@@ -96,7 +96,7 @@ export const SERVICES: ServiceConfig[] = [
     borderColorClass: 'border-teal-200',
     cardBgColor: '#cffafe',
     iconEmoji: '✨',
-    verse: { text: 'Do you not know that your bodies are temples of the Holy Spirit? Therefore honour God with your bodies.', ref: '1 Corinthians 6:19–20' },
+    verse: { text: 'How lovely is your dwelling place, Lord Almighty! I would rather be a doorkeeper in the house of my God than dwell in the tents of the wicked.', ref: 'Psalm 84:1,10' },
   },
   {
     id: 'uncle-gamal-juice',
