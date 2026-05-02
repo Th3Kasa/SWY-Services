@@ -23,7 +23,7 @@ export const SERVICES: ServiceConfig[] = [
     textColorClass: 'text-amber-700',
     badgeBgClass: 'bg-amber-100',
     borderColorClass: 'border-amber-200',
-    cardBgColor: '#fffbeb',
+    cardBgColor: '#dbeafe',
     iconEmoji: '🌍',
   },
   {
@@ -36,7 +36,7 @@ export const SERVICES: ServiceConfig[] = [
     textColorClass: 'text-violet-700',
     badgeBgClass: 'bg-violet-100',
     borderColorClass: 'border-violet-200',
-    cardBgColor: '#f5f3ff',
+    cardBgColor: '#ede9fe',
     iconEmoji: '🌙',
   },
   {
@@ -49,7 +49,7 @@ export const SERVICES: ServiceConfig[] = [
     textColorClass: 'text-rose-700',
     badgeBgClass: 'bg-rose-100',
     borderColorClass: 'border-rose-200',
-    cardBgColor: '#fff1f2',
+    cardBgColor: '#dcfce7',
     iconEmoji: '💝',
   },
   {
@@ -62,7 +62,7 @@ export const SERVICES: ServiceConfig[] = [
     textColorClass: 'text-orange-700',
     badgeBgClass: 'bg-orange-100',
     borderColorClass: 'border-orange-200',
-    cardBgColor: '#fff7ed',
+    cardBgColor: '#fce7f3',
     iconEmoji: '🎂',
   },
   {
@@ -75,7 +75,7 @@ export const SERVICES: ServiceConfig[] = [
     textColorClass: 'text-yellow-700',
     badgeBgClass: 'bg-yellow-100',
     borderColorClass: 'border-yellow-200',
-    cardBgColor: '#fefce8',
+    cardBgColor: '#fef9c3',
     iconEmoji: '🍞',
   },
   {
@@ -88,7 +88,7 @@ export const SERVICES: ServiceConfig[] = [
     textColorClass: 'text-teal-700',
     badgeBgClass: 'bg-teal-100',
     borderColorClass: 'border-teal-200',
-    cardBgColor: '#f0fdfa',
+    cardBgColor: '#cffafe',
     iconEmoji: '✨',
   },
   {
@@ -101,7 +101,7 @@ export const SERVICES: ServiceConfig[] = [
     textColorClass: 'text-green-700',
     badgeBgClass: 'bg-green-100',
     borderColorClass: 'border-green-200',
-    cardBgColor: '#f0fdf4',
+    cardBgColor: '#ffedd5',
     iconEmoji: '🍹',
   },
 ];
