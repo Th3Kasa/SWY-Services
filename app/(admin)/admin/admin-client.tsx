@@ -3,6 +3,10 @@
 import { useEffect, useState, useCallback, Fragment } from 'react';
 import { SERVICES } from '@/lib/services';
 
+function toTitleCase(str: string) {
+  return str.trim().toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+
 type User = {
   id: string;
   full_name: string;
@@ -32,6 +36,10 @@ export function AdminClient({ adminName }: { adminName: string }) {
   const [addEmail, setAddEmail] = useState('');
   const [addError, setAddError] = useState('');
   const [addLoading, setAddLoading] = useState(false);
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [editUserForm, setEditUserForm] = useState<{ full_name: string; email: string }>({ full_name: '', email: '' });
+  const [editUserError, setEditUserError] = useState('');
+  const [editUserLoading, setEditUserLoading] = useState(false);
 
   // ── Entries state ────────────────────────────────────────────────────────────
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -81,6 +89,28 @@ export function AdminClient({ adminName }: { adminName: string }) {
     if (!res.ok) { setAddError(json.error); return; }
     setAddName('');
     setAddEmail('');
+    fetchUsers();
+  }
+
+  // ── Edit user ────────────────────────────────────────────────────────────────
+  function startEditUser(user: User) {
+    setEditingUserId(user.id);
+    setEditUserForm({ full_name: user.full_name, email: user.email });
+    setEditUserError('');
+  }
+
+  async function handleSaveUser(id: string) {
+    setEditUserError('');
+    setEditUserLoading(true);
+    const res = await fetch(`/api/admin/users/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ full_name: toTitleCase(editUserForm.full_name), email: editUserForm.email }),
+    });
+    const json = await res.json();
+    setEditUserLoading(false);
+    if (!res.ok) { setEditUserError(json.error); return; }
+    setEditingUserId(null);
     fetchUsers();
   }
 
@@ -367,32 +397,84 @@ export function AdminClient({ adminName }: { adminName: string }) {
                     </thead>
                     <tbody>
                       {users.map((user, i) => (
-                        <tr
-                          key={user.id}
-                          className={`hover:bg-stone-50 transition-colors ${
-                            i < users.length - 1 ? 'border-b border-stone-50' : ''
-                          }`}
-                        >
-                          <td className="px-4 py-3 font-medium text-stone-800">{user.full_name}</td>
-                          <td className="px-4 py-3 text-stone-500">{user.email}</td>
-                          <td className="px-4 py-3 text-stone-400 text-xs whitespace-nowrap">
-                            {new Date(user.created_at).toLocaleDateString('en-AU', {
-                              day: 'numeric', month: 'short', year: 'numeric',
-                            })}
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            {user.email.toLowerCase() === 'basemmorkos98@gmail.com' ? (
-                              <span className="text-xs text-amber-600 font-medium">Admin</span>
+                        <Fragment key={user.id}>
+                          <tr className={`hover:bg-stone-50 transition-colors ${i < users.length - 1 ? 'border-b border-stone-50' : ''}`}>
+                            {editingUserId === user.id ? (
+                              <>
+                                <td className="px-4 py-2">
+                                  <input
+                                    value={editUserForm.full_name}
+                                    onChange={e => setEditUserForm(f => ({ ...f, full_name: e.target.value }))}
+                                    className="border border-stone-200 rounded px-2 py-1 text-sm w-full focus:outline-none focus:ring-2 focus:ring-amber-400"
+                                  />
+                                </td>
+                                <td className="px-4 py-2">
+                                  <input
+                                    type="email"
+                                    value={editUserForm.email}
+                                    onChange={e => setEditUserForm(f => ({ ...f, email: e.target.value }))}
+                                    className="border border-stone-200 rounded px-2 py-1 text-sm w-full focus:outline-none focus:ring-2 focus:ring-amber-400"
+                                  />
+                                </td>
+                                <td className="px-4 py-2 text-stone-400 text-xs whitespace-nowrap">
+                                  {new Date(user.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                </td>
+                                <td className="px-4 py-2">
+                                  <div className="flex items-center gap-2 justify-end">
+                                    <button
+                                      onClick={() => handleSaveUser(user.id)}
+                                      disabled={editUserLoading}
+                                      className="text-xs bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded-lg font-medium transition-colors disabled:opacity-50"
+                                    >
+                                      {editUserLoading ? 'Saving…' : 'Save'}
+                                    </button>
+                                    <button
+                                      onClick={() => setEditingUserId(null)}
+                                      className="text-xs text-stone-500 hover:text-stone-700 px-2 py-1 rounded-lg transition-colors"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </td>
+                              </>
                             ) : (
-                              <button
-                                onClick={() => handleDeleteUser(user.id, user.full_name)}
-                                className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors"
-                              >
-                                Remove
-                              </button>
+                              <>
+                                <td className="px-4 py-3 font-medium text-stone-800">{user.full_name}</td>
+                                <td className="px-4 py-3 text-stone-500">{user.email}</td>
+                                <td className="px-4 py-3 text-stone-400 text-xs whitespace-nowrap">
+                                  {new Date(user.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                </td>
+                                <td className="px-4 py-3 text-right">
+                                  {user.email.toLowerCase() === 'basemmorkos98@gmail.com' ? (
+                                    <span className="text-xs text-amber-600 font-medium">Admin</span>
+                                  ) : (
+                                    <div className="flex items-center gap-3 justify-end">
+                                      <button
+                                        onClick={() => startEditUser(user)}
+                                        className="text-xs text-amber-600 hover:text-amber-800 font-medium transition-colors"
+                                      >
+                                        Edit
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteUser(user.id, user.full_name)}
+                                        className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors"
+                                      >
+                                        Remove
+                                      </button>
+                                    </div>
+                                  )}
+                                </td>
+                              </>
                             )}
-                          </td>
-                        </tr>
+                          </tr>
+                          {editingUserId === user.id && editUserError && (
+                            <tr>
+                              <td colSpan={4} className="px-4 pb-2">
+                                <p className="text-red-500 text-xs">{editUserError}</p>
+                              </td>
+                            </tr>
+                          )}
+                        </Fragment>
                       ))}
                     </tbody>
                   </table>

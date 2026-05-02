@@ -9,13 +9,14 @@ import { Input } from '@/components/ui/input';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ name: '', email: '' });
+  const [form, setForm] = useState({ firstName: '', lastName: '', email: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
   function validate() {
     const errs: Record<string, string> = {};
-    if (!form.name.trim()) errs.name = 'Full name is required';
+    if (!form.firstName.trim()) errs.firstName = 'First name is required';
+    if (!form.lastName.trim()) errs.lastName = 'Last name is required';
     if (!form.email.trim()) {
       errs.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
@@ -35,11 +36,13 @@ export default function LoginPage() {
     setLoading(true);
     setErrors({});
 
+    const fullName = `${form.firstName.trim()} ${form.lastName.trim()}`;
+
     try {
       const res = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: form.name.trim(), email: form.email.trim().toLowerCase() }),
+        body: JSON.stringify({ name: fullName, email: form.email.trim().toLowerCase() }),
       });
 
       if (!res.ok) {
@@ -98,15 +101,26 @@ export default function LoginPage() {
           </p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
-            <Input
-              label="Full Name"
-              placeholder="e.g. John Smith"
-              required
-              autoComplete="name"
-              value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              error={errors.name}
-            />
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="First Name"
+                placeholder="e.g. John"
+                required
+                autoComplete="given-name"
+                value={form.firstName}
+                onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
+                error={errors.firstName}
+              />
+              <Input
+                label="Last Name"
+                placeholder="e.g. Smith"
+                required
+                autoComplete="family-name"
+                value={form.lastName}
+                onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
+                error={errors.lastName}
+              />
+            </div>
             <Input
               label="Email Address"
               type="email"

@@ -29,7 +29,7 @@ const STEPS = [
     n: 1,
     icon: LogIn,
     title: 'Sign in (no password!)',
-    body: 'Just type your full name and email. That\'s it — you\'re in. We use your email to send you reminders, nothing else.',
+    body: 'Enter your first name, last name, and email — that\'s it, no password needed. We use your email to send you reminders, nothing else.',
     color: '#dbeafe',
     accent: 'text-blue-700',
   },
@@ -78,7 +78,7 @@ const STEPS = [
 const FAQS = [
   {
     q: 'Do I need to sign up or create an account?',
-    a: 'No — there\'s no signup form and no password. The first time you enter your name and email, we save you automatically. Next time, just type the same details and you\'re back in.',
+    a: 'No — there\'s no signup form and no password. Just enter your first name, last name, and email. The first time, we save you automatically. Next time, type the same details and you\'re right back in.',
   },
   {
     q: 'Can two people sign in with the same email?',
@@ -122,12 +122,26 @@ export function HelpClient() {
         </p>
       </motion.div>
 
+      {/* Bible verse */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+        className="mb-8 rounded-2xl border border-amber-200 bg-amber-50 px-6 py-5 text-center"
+      >
+        <p className="text-base sm:text-lg font-semibold text-amber-900 italic leading-relaxed mb-2">
+          &ldquo;Each of you should use whatever gift you have received to serve others,
+          as faithful stewards of God&apos;s grace in its various forms.&rdquo;
+        </p>
+        <p className="text-sm text-amber-700 font-medium">— 1 Peter 4:10</p>
+      </motion.div>
+
       {/* Steps */}
       <motion.div
         variants={containerVariants}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10"
+        className="flex flex-col gap-4 mb-10"
       >
         {STEPS.map((step) => {
           const Icon = step.icon;
