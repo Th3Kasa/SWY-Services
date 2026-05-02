@@ -88,7 +88,7 @@ export function ServiceDetailClient({ service, initialEntries, userEmail }: Serv
         transition={{ duration: 0.4, delay: 0.15 }}
         className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-center"
       >
-        <p className="text-sm sm:text-base font-semibold text-amber-900 italic leading-relaxed mb-1">
+        <p className="text-sm sm:text-base font-semibold text-amber-900 leading-relaxed mb-1">
           &ldquo;{service.verse.text}&rdquo;
         </p>
         <p className="text-xs text-amber-700 font-medium">— {service.verse.ref}</p>

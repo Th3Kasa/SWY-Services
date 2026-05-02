@@ -129,9 +129,8 @@ export function HelpClient() {
         transition={{ duration: 0.4, delay: 0.1 }}
         className="mb-8 rounded-2xl border border-amber-200 bg-amber-50 px-6 py-5 text-center"
       >
-        <p className="text-base sm:text-lg font-semibold text-amber-900 italic leading-relaxed mb-2">
-          &ldquo;Each of you should use whatever gift you have received to serve others,
-          as faithful stewards of God&apos;s grace in its various forms.&rdquo;
+        <p className="text-base sm:text-lg font-semibold text-amber-900 leading-relaxed mb-2">
+          &ldquo;As each one has received a gift, minister it to one another, as good stewards of the manifold grace of God.&rdquo;
         </p>
         <p className="text-sm text-amber-700 font-medium">— 1 Peter 4:10</p>
       </motion.div>
