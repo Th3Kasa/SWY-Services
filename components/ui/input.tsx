@@ -60,10 +60,11 @@ export interface TextareaProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
   error?: string;
+  helperText?: string;
 }
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className, label, error, id, ...props }, ref) => {
+  ({ className, label, error, helperText, id, ...props }, ref) => {
     const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
 
     return (
@@ -99,6 +100,9 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             </svg>
             {error}
           </p>
+        )}
+        {helperText && !error && (
+          <p className="text-xs text-stone-500">{helperText}</p>
         )}
       </div>
     );
