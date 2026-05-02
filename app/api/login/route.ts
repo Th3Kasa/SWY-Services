@@ -2,10 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServer } from '@/lib/supabase';
 import { COOKIE_NAME, serializeAuthCookie } from '@/lib/auth';
 
+function toTitleCase(str: string): string {
+  return str.trim().toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const name = (body.name as string)?.trim();
+    const name = toTitleCase((body.name as string) ?? '');
     const email = (body.email as string)?.trim().toLowerCase();
 
     // Validate
