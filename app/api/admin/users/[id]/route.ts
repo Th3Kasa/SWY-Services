@@ -53,7 +53,7 @@ async function sendAdminInviteEmail(to: string, name: string, token: string): Pr
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   if (!isAdmin(req)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-  let body: { makeAdmin?: boolean; removeAdmin?: boolean; resendInvite?: boolean };
+  let body: { makeAdmin?: boolean; removeAdmin?: boolean; resendInvite?: boolean; getInviteLink?: boolean };
   try { body = await req.json(); } catch {
     return NextResponse.json({ error: 'Invalid body.' }, { status: 400 });
   }
@@ -63,11 +63,23 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   // Fetch the target user first
   const { data: target, error: fetchErr } = await supabase
     .from('users')
-    .select('id, full_name, email, is_admin, pin_hash')
+    .select('id, full_name, email, is_admin, pin_hash, admin_invite_token, admin_invite_token_expires_at')
     .eq('id', params.id)
     .single();
 
   if (fetchErr || !target) return NextResponse.json({ error: 'User not found.' }, { status: 404 });
+
+  if (body.getInviteLink) {
+    if (!target.is_admin || target.pin_hash) {
+      return NextResponse.json({ error: 'No pending invite for this user.' }, { status: 400 });
+    }
+    // Regenerate token so it's always fresh when copying
+    const token = randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    await supabase.from('users').update({ admin_invite_token: token, admin_invite_token_expires_at: expires }).eq('id', params.id);
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://swy-services.vercel.app';
+    return NextResponse.json({ link: `${appUrl}/setup-admin-pin?token=${token}` });
+  }
 
   if (body.makeAdmin || body.resendInvite) {
     if (body.resendInvite && !target.is_admin) {

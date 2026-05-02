@@ -179,6 +179,20 @@ export function AdminClient({ adminName, userNames }: { adminName: string; userN
     fetchUsers();
   }
 
+  async function handleCopyInviteLink(id: string) {
+    setAdminActionId(id);
+    const res = await fetch(`/api/admin/users/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ getInviteLink: true }),
+    });
+    const json = await res.json();
+    setAdminActionId(null);
+    if (!res.ok) { alert(json.error); return; }
+    await navigator.clipboard.writeText(json.link);
+    alert('Setup link copied! Share it directly with the user.');
+  }
+
   // ── Change PIN ───────────────────────────────────────────────────────────────
   async function handleChangePIN(e: React.FormEvent) {
     e.preventDefault();
@@ -531,14 +545,24 @@ export function AdminClient({ adminName, userNames }: { adminName: string; userN
                                         <>
                                           <span className="text-xs bg-violet-100 text-violet-700 font-semibold px-2 py-0.5 rounded-full">Admin</span>
                                           {!user.pin_hash && (
-                                            <button
-                                              onClick={() => handleResendInvite(user.id, user.full_name)}
-                                              disabled={adminActionId === user.id}
-                                              className="text-xs text-stone-400 hover:text-stone-600 font-medium transition-colors disabled:opacity-50"
-                                              title="PIN not set yet — resend invite email"
-                                            >
-                                              {adminActionId === user.id ? '…' : 'Resend Invite'}
-                                            </button>
+                                            <>
+                                              <button
+                                                onClick={() => handleResendInvite(user.id, user.full_name)}
+                                                disabled={adminActionId === user.id}
+                                                className="text-xs text-stone-400 hover:text-stone-600 font-medium transition-colors disabled:opacity-50"
+                                                title="Resend PIN setup email"
+                                              >
+                                                {adminActionId === user.id ? '…' : 'Resend Invite'}
+                                              </button>
+                                              <button
+                                                onClick={() => handleCopyInviteLink(user.id)}
+                                                disabled={adminActionId === user.id}
+                                                className="text-xs text-stone-400 hover:text-stone-600 font-medium transition-colors disabled:opacity-50"
+                                                title="Copy setup link to clipboard"
+                                              >
+                                                Copy Link
+                                              </button>
+                                            </>
                                           )}
                                         </>
                                       )}
