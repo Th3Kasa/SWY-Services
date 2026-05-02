@@ -9,6 +9,7 @@ import { ServiceConfig } from '@/lib/services';
 interface CalendarClientProps {
   entries: ServiceEntry[];
   services: ServiceConfig[];
+  submitterNames: Record<string, string>;
 }
 
 const MONTHS = [
@@ -18,7 +19,7 @@ const MONTHS = [
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-export function CalendarClient({ entries, services }: CalendarClientProps) {
+export function CalendarClient({ entries, services, submitterNames }: CalendarClientProps) {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth()); // 0-indexed
@@ -207,6 +208,7 @@ export function CalendarClient({ entries, services }: CalendarClientProps) {
                     </div>
                     <p className="text-sm text-stone-700 mt-0.5 font-medium">{e.what}</p>
                     <p className="text-xs text-stone-500 mt-0.5 truncate">👥 {e.team}</p>
+                    <p className="text-xs text-stone-400 mt-1">Posted by {submitterNames[e.created_by_email] ?? 'Unknown'}</p>
                   </div>
                 </motion.div>
               );
