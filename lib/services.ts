@@ -8,6 +8,7 @@ export type ServiceConfig = {
   textColorClass: string;
   badgeBgClass: string;
   borderColorClass: string;
+  cardBgClass: string;
   iconEmoji: string;
 };
 
@@ -22,6 +23,7 @@ export const SERVICES: ServiceConfig[] = [
     textColorClass: 'text-amber-700',
     badgeBgClass: 'bg-amber-100',
     borderColorClass: 'border-amber-200',
+    cardBgClass: 'bg-amber-50',
     iconEmoji: '🌍',
   },
   {
@@ -34,6 +36,7 @@ export const SERVICES: ServiceConfig[] = [
     textColorClass: 'text-violet-700',
     badgeBgClass: 'bg-violet-100',
     borderColorClass: 'border-violet-200',
+    cardBgClass: 'bg-violet-50',
     iconEmoji: '🌙',
   },
   {
@@ -46,6 +49,7 @@ export const SERVICES: ServiceConfig[] = [
     textColorClass: 'text-rose-700',
     badgeBgClass: 'bg-rose-100',
     borderColorClass: 'border-rose-200',
+    cardBgClass: 'bg-rose-50',
     iconEmoji: '💝',
   },
   {
@@ -58,6 +62,7 @@ export const SERVICES: ServiceConfig[] = [
     textColorClass: 'text-orange-700',
     badgeBgClass: 'bg-orange-100',
     borderColorClass: 'border-orange-200',
+    cardBgClass: 'bg-orange-50',
     iconEmoji: '🎂',
   },
   {
@@ -70,6 +75,7 @@ export const SERVICES: ServiceConfig[] = [
     textColorClass: 'text-yellow-700',
     badgeBgClass: 'bg-yellow-100',
     borderColorClass: 'border-yellow-200',
+    cardBgClass: 'bg-yellow-50',
     iconEmoji: '🍞',
   },
   {
@@ -82,6 +88,7 @@ export const SERVICES: ServiceConfig[] = [
     textColorClass: 'text-teal-700',
     badgeBgClass: 'bg-teal-100',
     borderColorClass: 'border-teal-200',
+    cardBgClass: 'bg-teal-50',
     iconEmoji: '✨',
   },
   {
@@ -94,6 +101,7 @@ export const SERVICES: ServiceConfig[] = [
     textColorClass: 'text-green-700',
     badgeBgClass: 'bg-green-100',
     borderColorClass: 'border-green-200',
+    cardBgClass: 'bg-green-50',
     iconEmoji: '🍹',
   },
 ];

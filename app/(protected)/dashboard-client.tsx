@@ -63,10 +63,7 @@ export function DashboardClient({ services, counts }: DashboardClientProps) {
               variants={cardVariants}
               whileHover={{ y: -4, transition: { duration: 0.2 } }}
             >
-              <Card className={`h-full border-t-4 ${service.borderColorClass} overflow-hidden`}>
-                {/* Color top bar */}
-                <div className={`h-1.5 ${service.colorClass}`} />
-
+              <Card className={`h-full border-2 ${service.borderColorClass} ${service.cardBgClass} overflow-hidden`}>
                 <CardContent className="pt-4 pb-4">
                   {/* Icon + name */}
                   <div className="flex items-start justify-between gap-2 mb-3">
