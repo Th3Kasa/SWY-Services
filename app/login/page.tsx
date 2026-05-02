@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
+
   const isAdmin = form.email.trim().toLowerCase() === ADMIN_EMAIL;
+  // Show reCAPTCHA (and hide QR) once name + email are both filled in
+  const showCaptcha = form.name.trim().length > 0 && form.email.trim().length > 0;
 
   function validate() {
     const errs: Record<string, string> = {};
@@ -160,16 +163,6 @@ export default function LoginPage() {
               />
             )}
 
-            {/* reCAPTCHA */}
-            <div className="flex justify-center">
-              <ReCAPTCHA
-                ref={recaptchaRef}
-                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
-                onChange={(token) => setCaptchaToken(token)}
-                onExpired={() => setCaptchaToken(null)}
-              />
-            </div>
-
             {errors.submit && (
               <div className="rounded-xl bg-rose-50 border border-rose-200 px-4 py-3 text-sm text-rose-700">
                 {errors.submit}
@@ -194,21 +187,53 @@ export default function LoginPage() {
             Having trouble? Speak to <span className="font-semibold text-stone-500">Basem</span> for help.
           </p>
 
-          {/* QR code */}
-          <div className="mt-6 pt-5 border-t border-stone-100 flex flex-col items-center">
-            <p className="text-xs text-stone-500 mb-3 text-center font-medium">
-              📱 Scan to open on your phone
-            </p>
-            <div className="rounded-2xl bg-white border-2 border-amber-200 p-3 shadow-sm">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=0&data=https%3A%2F%2Fswy-services.vercel.app%2F"
-                alt="Scan to open swy-services.vercel.app"
-                width={180}
-                height={180}
-                className="block"
-              />
-            </div>
+          {/* Bottom section — QR code fades out, reCAPTCHA fades in */}
+          <div className="mt-6 pt-5 border-t border-stone-100 flex flex-col items-center min-h-[220px] justify-center">
+            <AnimatePresence mode="wait">
+              {showCaptcha ? (
+                <motion.div
+                  key="captcha"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3 }}
+                  className="flex flex-col items-center gap-2"
+                >
+                  <p className="text-xs text-stone-500 mb-2 text-center font-medium">
+                    ✅ One last step — prove you&apos;re human
+                  </p>
+                  <ReCAPTCHA
+                    ref={recaptchaRef}
+                    sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+                    onChange={(token) => setCaptchaToken(token)}
+                    onExpired={() => setCaptchaToken(null)}
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="qrcode"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3 }}
+                  className="flex flex-col items-center"
+                >
+                  <p className="text-xs text-stone-500 mb-3 text-center font-medium">
+                    📱 Scan to open on your phone
+                  </p>
+                  <div className="rounded-2xl bg-white border-2 border-amber-200 p-3 shadow-sm">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=0&data=https%3A%2F%2Fswy-services.vercel.app%2F"
+                      alt="Scan to open swy-services.vercel.app"
+                      width={180}
+                      height={180}
+                      className="block"
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </motion.div>
       </motion.div>
