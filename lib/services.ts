@@ -8,7 +8,7 @@ export type ServiceConfig = {
   textColorClass: string;
   badgeBgClass: string;
   borderColorClass: string;
-  cardBgClass: string;
+  cardBgColor: string; // hex — used as inline style to avoid Tailwind purging
   iconEmoji: string;
 };
 
@@ -23,7 +23,7 @@ export const SERVICES: ServiceConfig[] = [
     textColorClass: 'text-amber-700',
     badgeBgClass: 'bg-amber-100',
     borderColorClass: 'border-amber-200',
-    cardBgClass: 'bg-amber-50',
+    cardBgColor: '#fffbeb',
     iconEmoji: '🌍',
   },
   {
@@ -36,7 +36,7 @@ export const SERVICES: ServiceConfig[] = [
     textColorClass: 'text-violet-700',
     badgeBgClass: 'bg-violet-100',
     borderColorClass: 'border-violet-200',
-    cardBgClass: 'bg-violet-50',
+    cardBgColor: '#f5f3ff',
     iconEmoji: '🌙',
   },
   {
@@ -49,7 +49,7 @@ export const SERVICES: ServiceConfig[] = [
     textColorClass: 'text-rose-700',
     badgeBgClass: 'bg-rose-100',
     borderColorClass: 'border-rose-200',
-    cardBgClass: 'bg-rose-50',
+    cardBgColor: '#fff1f2',
     iconEmoji: '💝',
   },
   {
@@ -62,7 +62,7 @@ export const SERVICES: ServiceConfig[] = [
     textColorClass: 'text-orange-700',
     badgeBgClass: 'bg-orange-100',
     borderColorClass: 'border-orange-200',
-    cardBgClass: 'bg-orange-50',
+    cardBgColor: '#fff7ed',
     iconEmoji: '🎂',
   },
   {
@@ -75,7 +75,7 @@ export const SERVICES: ServiceConfig[] = [
     textColorClass: 'text-yellow-700',
     badgeBgClass: 'bg-yellow-100',
     borderColorClass: 'border-yellow-200',
-    cardBgClass: 'bg-yellow-50',
+    cardBgColor: '#fefce8',
     iconEmoji: '🍞',
   },
   {
@@ -88,7 +88,7 @@ export const SERVICES: ServiceConfig[] = [
     textColorClass: 'text-teal-700',
     badgeBgClass: 'bg-teal-100',
     borderColorClass: 'border-teal-200',
-    cardBgClass: 'bg-teal-50',
+    cardBgColor: '#f0fdfa',
     iconEmoji: '✨',
   },
   {
@@ -101,7 +101,7 @@ export const SERVICES: ServiceConfig[] = [
     textColorClass: 'text-green-700',
     badgeBgClass: 'bg-green-100',
     borderColorClass: 'border-green-200',
-    cardBgClass: 'bg-green-50',
+    cardBgColor: '#f0fdf4',
     iconEmoji: '🍹',
   },
 ];
