@@ -63,7 +63,7 @@ export function DashboardClient({ services, counts }: DashboardClientProps) {
               variants={cardVariants}
               whileHover={{ y: -4, transition: { duration: 0.2 } }}
             >
-              <Card className={`h-full border-2 ${service.borderColorClass} overflow-hidden`} style={{ backgroundColor: service.cardBgColor }}>
+              <Card className="h-full border-2 border-amber-200 overflow-hidden" style={{ backgroundColor: service.cardBgColor }}>
                 <CardContent className="pt-4 pb-4">
                   {/* Icon + name */}
                   <div className="flex items-start justify-between gap-2 mb-3">
@@ -74,7 +74,7 @@ export function DashboardClient({ services, counts }: DashboardClientProps) {
                       </h2>
                     </div>
                     <Badge
-                      className={`${service.badgeBgClass} ${service.textColorClass} border-0 shrink-0 mt-1`}
+                      className="bg-amber-100 text-amber-700 border-0 shrink-0 mt-1"
                     >
                       {service.frequency}
                     </Badge>
