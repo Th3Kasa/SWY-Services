@@ -55,7 +55,7 @@ export const SERVICES: ServiceConfig[] = [
   {
     id: 'friday-cooking-birthdays',
     name: 'Friday Night Cooking & Birthdays',
-    leader: 'Joey Saad',
+    leader: 'Joey & Ibby',
     leaderEmail: 'josephsaad2165@gmail.com',
     frequency: 'Monthly',
     colorClass: 'bg-orange-500',
