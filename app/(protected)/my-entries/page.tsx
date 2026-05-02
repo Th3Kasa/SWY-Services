@@ -43,5 +43,5 @@ export default async function MyEntriesPage() {
   const user = getAuthUser()!; // protected layout guarantees user exists
   const entries = await getUserEntries(user.email, user.name);
 
-  return <MyEntriesClient entries={entries} userName={user.name} />;
+  return <MyEntriesClient entries={entries} userName={user.name} userEmail={user.email} />;
 }

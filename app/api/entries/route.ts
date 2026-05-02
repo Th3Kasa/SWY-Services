@@ -72,6 +72,22 @@ export async function POST(req: NextRequest) {
 
   try {
     const supabase = getSupabaseServer();
+
+    // Check for duplicate: same service + same date
+    const { data: existing } = await supabase
+      .from('service_entries')
+      .select('id, team')
+      .eq('service_id', serviceId)
+      .eq('date', date)
+      .maybeSingle();
+
+    if (existing) {
+      return NextResponse.json(
+        { error: `An entry for this service on that date already exists (submitted by: ${existing.team}). Please choose a different date.` },
+        { status: 409 }
+      );
+    }
+
     const { data, error } = await supabase
       .from('service_entries')
       .insert({

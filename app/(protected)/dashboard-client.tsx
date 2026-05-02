@@ -30,6 +30,8 @@ const cardVariants = {
 };
 
 export function DashboardClient({ services, counts }: DashboardClientProps) {
+  const totalUpcoming = Object.values(counts).reduce((a, b) => a + b, 0);
+
   return (
     <div>
       {/* Page header */}
@@ -46,6 +48,22 @@ export function DashboardClient({ services, counts }: DashboardClientProps) {
           All 7 recurring youth services. Tap a card to view and add entries.
         </p>
       </motion.div>
+
+      {/* Empty state banner — shown when no upcoming entries across all services */}
+      {totalUpcoming === 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+          className="mb-6 rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50 px-6 py-8 text-center"
+        >
+          <div className="text-5xl mb-3">🗓️</div>
+          <h2 className="text-base font-semibold text-stone-700 mb-1">No upcoming entries yet</h2>
+          <p className="text-sm text-stone-400">
+            The schedule is empty. Tap any service card below to add the first entry!
+          </p>
+        </motion.div>
+      )}
 
       {/* Grid */}
       <motion.div

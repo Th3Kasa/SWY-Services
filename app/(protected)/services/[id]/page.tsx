@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getSupabaseServer, ServiceEntry } from '@/lib/supabase';
 import { getServiceById } from '@/lib/services';
+import { getAuthUser } from '@/lib/auth';
 import { ServiceDetailClient } from './service-detail-client';
 
 interface PageProps {
@@ -28,6 +29,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
   if (!service) notFound();
 
   const entries = await getEntries(params.id);
+  const user = getAuthUser();
 
-  return <ServiceDetailClient service={service} initialEntries={entries} />;
+  return <ServiceDetailClient service={service} initialEntries={entries} userEmail={user?.email ?? ''} />;
 }

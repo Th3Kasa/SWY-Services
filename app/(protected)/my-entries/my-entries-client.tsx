@@ -1,20 +1,22 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { Calendar, Users, FileText, ArrowRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Calendar, Users, FileText, ArrowRight, Pencil, Trash2, Check, X } from 'lucide-react';
 import { ServiceEntry } from '@/lib/supabase';
 import { getServiceById } from '@/lib/services';
 import { formatDate, isUpcoming } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 interface MyEntriesClientProps {
   entries: ServiceEntry[];
   userName: string;
+  userEmail: string;
 }
 
-export function MyEntriesClient({ entries, userName }: MyEntriesClientProps) {
+export function MyEntriesClient({ entries, userName, userEmail }: MyEntriesClientProps) {
   const upcoming = entries.filter((e) => isUpcoming(e.date));
   const past = entries.filter((e) => !isUpcoming(e.date)).reverse();
 
@@ -51,10 +53,10 @@ export function MyEntriesClient({ entries, userName }: MyEntriesClientProps) {
       ) : (
         <div className="flex flex-col gap-8">
           {upcoming.length > 0 && (
-            <EntriesSection title="Upcoming" entries={upcoming} />
+            <EntriesSection title="Upcoming" entries={upcoming} userEmail={userEmail} />
           )}
           {past.length > 0 && (
-            <EntriesSection title="Past" entries={past} muted />
+            <EntriesSection title="Past" entries={past} userEmail={userEmail} muted />
           )}
         </div>
       )}
@@ -65,10 +67,12 @@ export function MyEntriesClient({ entries, userName }: MyEntriesClientProps) {
 function EntriesSection({
   title,
   entries,
+  userEmail,
   muted = false,
 }: {
   title: string;
   entries: ServiceEntry[];
+  userEmail: string;
   muted?: boolean;
 }) {
   return (
@@ -82,60 +86,222 @@ function EntriesSection({
         variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06 } } }}
         className="flex flex-col gap-3"
       >
-        {entries.map((entry) => {
-          const service = getServiceById(entry.service_id);
-          return (
-            <motion.li
-              key={entry.id}
-              variants={{
-                hidden: { opacity: 0, y: 12 },
-                show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
-              }}
-              className={`rounded-2xl border bg-white p-4 shadow-card ${muted ? 'opacity-60' : ''}`}
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                <div className="flex-1 min-w-0">
-                  {/* Service name */}
-                  {service && (
-                    <div className="flex items-center gap-2 mb-2">
-                      <span>{service.iconEmoji}</span>
-                      <span className={`text-xs font-medium ${service.textColorClass} ${service.badgeBgClass} rounded-full px-2 py-0.5`}>
-                        {service.name}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Date */}
-                  <div className="flex items-center gap-1.5 mb-1.5 text-sm text-stone-600">
-                    <Calendar className="h-3.5 w-3.5 text-stone-400" />
-                    <span className="font-medium">{formatDate(entry.date)}</span>
-                  </div>
-
-                  {/* What */}
-                  <div className="flex items-start gap-1.5 mb-1">
-                    <FileText className="h-3.5 w-3.5 mt-0.5 text-stone-400 shrink-0" />
-                    <p className="text-sm font-semibold text-stone-900">{entry.what}</p>
-                  </div>
-
-                  {/* Team */}
-                  <div className="flex items-start gap-1.5">
-                    <Users className="h-3.5 w-3.5 mt-0.5 text-stone-400 shrink-0" />
-                    <p className="text-sm text-stone-600">{entry.team}</p>
-                  </div>
-                </div>
-
-                {service && (
-                  <Link href={`/services/${service.id}`} className="shrink-0">
-                    <Button variant="ghost" size="sm" className="gap-1 text-stone-500">
-                      View <ArrowRight className="h-3.5 w-3.5" />
-                    </Button>
-                  </Link>
-                )}
-              </div>
-            </motion.li>
-          );
-        })}
+        <AnimatePresence>
+          {entries.map((entry) => (
+            <EntryCard key={entry.id} entry={entry} userEmail={userEmail} muted={muted} />
+          ))}
+        </AnimatePresence>
       </motion.ul>
     </div>
+  );
+}
+
+function EntryCard({
+  entry,
+  userEmail,
+  muted,
+}: {
+  entry: ServiceEntry;
+  userEmail: string;
+  muted: boolean;
+}) {
+  const router = useRouter();
+  const service = getServiceById(entry.service_id);
+  const isOwner = entry.created_by_email === userEmail;
+
+  const [mode, setMode] = useState<'view' | 'edit'>('view');
+  const [editForm, setEditForm] = useState({ date: entry.date, team: entry.team, what: entry.what });
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [error, setError] = useState('');
+
+  async function handleSave() {
+    if (!editForm.date || !editForm.team.trim() || !editForm.what.trim()) {
+      setError('All fields are required.');
+      return;
+    }
+    setSaving(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/entries/${entry.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editForm),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        setError(d.error || 'Failed to save.');
+        return;
+      }
+      setMode('view');
+      router.refresh();
+    } catch {
+      setError('Network error.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    setDeleting(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/entries/${entry.id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        setError(d.error || 'Failed to delete.');
+        setDeleting(false);
+        setConfirmDelete(false);
+        return;
+      }
+      router.refresh();
+    } catch {
+      setError('Network error.');
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
+  }
+
+  return (
+    <motion.li
+      layout
+      variants={{
+        hidden: { opacity: 0, y: 12 },
+        show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
+      }}
+      exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
+      className={`rounded-2xl border bg-white p-4 shadow-card ${muted && mode === 'view' ? 'opacity-60' : ''}`}
+    >
+      {mode === 'view' ? (
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex-1 min-w-0">
+            {service && (
+              <div className="flex items-center gap-2 mb-2">
+                <span>{service.iconEmoji}</span>
+                <span className={`text-xs font-medium ${service.textColorClass} ${service.badgeBgClass} rounded-full px-2 py-0.5`}>
+                  {service.name}
+                </span>
+              </div>
+            )}
+            <div className="flex items-center gap-1.5 mb-1.5 text-sm text-stone-600">
+              <Calendar className="h-3.5 w-3.5 text-stone-400" />
+              <span className="font-medium">{formatDate(entry.date)}</span>
+            </div>
+            <div className="flex items-start gap-1.5 mb-1">
+              <FileText className="h-3.5 w-3.5 mt-0.5 text-stone-400 shrink-0" />
+              <p className="text-sm font-semibold text-stone-900">{entry.what}</p>
+            </div>
+            <div className="flex items-start gap-1.5">
+              <Users className="h-3.5 w-3.5 mt-0.5 text-stone-400 shrink-0" />
+              <p className="text-sm text-stone-600">{entry.team}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {isOwner && !confirmDelete && (
+              <>
+                <button
+                  onClick={() => { setMode('edit'); setEditForm({ date: entry.date, team: entry.team, what: entry.what }); setError(''); }}
+                  className="p-2 rounded-xl text-stone-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                  title="Edit entry"
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(true)}
+                  className="p-2 rounded-xl text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                  title="Delete entry"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </>
+            )}
+            {isOwner && confirmDelete && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-stone-500">Delete?</span>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="px-3 py-1.5 rounded-xl bg-rose-500 text-white text-xs font-medium hover:bg-rose-600 transition-colors disabled:opacity-60"
+                >
+                  {deleting ? '...' : 'Yes'}
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  className="px-3 py-1.5 rounded-xl bg-stone-100 text-stone-700 text-xs font-medium hover:bg-stone-200 transition-colors"
+                >
+                  No
+                </button>
+              </div>
+            )}
+            {!isOwner && service && (
+              <Link href={`/services/${service.id}`} className="shrink-0">
+                <Button variant="ghost" size="sm" className="gap-1 text-stone-500">
+                  View <ArrowRight className="h-3.5 w-3.5" />
+                </Button>
+              </Link>
+            )}
+          </div>
+        </div>
+      ) : (
+        /* Edit mode */
+        <div className="flex flex-col gap-3">
+          {service && (
+            <div className="flex items-center gap-2 mb-1">
+              <span>{service.iconEmoji}</span>
+              <span className={`text-xs font-medium ${service.textColorClass} ${service.badgeBgClass} rounded-full px-2 py-0.5`}>
+                {service.name}
+              </span>
+            </div>
+          )}
+          <div className="flex flex-col gap-2">
+            <div>
+              <label className="text-xs font-medium text-stone-500 mb-1 block">Date</label>
+              <input
+                type="date"
+                value={editForm.date}
+                onChange={(e) => setEditForm(f => ({ ...f, date: e.target.value }))}
+                className="h-9 w-full rounded-xl border border-stone-200 bg-white px-3 text-sm text-stone-900 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-stone-500 mb-1 block">Team / Who</label>
+              <input
+                type="text"
+                value={editForm.team}
+                onChange={(e) => setEditForm(f => ({ ...f, team: e.target.value }))}
+                className="h-9 w-full rounded-xl border border-stone-200 bg-white px-3 text-sm text-stone-900 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-stone-500 mb-1 block">What</label>
+              <textarea
+                rows={2}
+                value={editForm.what}
+                onChange={(e) => setEditForm(f => ({ ...f, what: e.target.value }))}
+                className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2 text-sm text-stone-900 outline-none resize-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+              />
+            </div>
+          </div>
+          {error && <p className="text-xs text-rose-600">{error}</p>}
+          <div className="flex gap-2 justify-end">
+            <button
+              onClick={() => { setMode('view'); setError(''); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-100 text-stone-700 text-sm font-medium hover:bg-stone-200 transition-colors"
+            >
+              <X className="h-3.5 w-3.5" /> Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 text-white text-sm font-medium hover:bg-amber-600 transition-colors disabled:opacity-60"
+            >
+              <Check className="h-3.5 w-3.5" /> {saving ? 'Saving…' : 'Save'}
+            </button>
+          </div>
+        </div>
+      )}
+    </motion.li>
   );
 }
