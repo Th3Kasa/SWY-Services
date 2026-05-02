@@ -24,7 +24,7 @@ type Entry = {
   created_at: string;
 };
 
-type Tab = 'users' | 'entries';
+type Tab = 'users' | 'entries' | 'settings';
 
 export function AdminClient({ adminName }: { adminName: string }) {
   const [tab, setTab] = useState<Tab>('entries');
@@ -40,6 +40,12 @@ export function AdminClient({ adminName }: { adminName: string }) {
   const [editUserForm, setEditUserForm] = useState<{ full_name: string; email: string }>({ full_name: '', email: '' });
   const [editUserError, setEditUserError] = useState('');
   const [editUserLoading, setEditUserLoading] = useState(false);
+
+  // ── PIN change state ─────────────────────────────────────────────────────────
+  const [pinForm, setPinForm] = useState({ current: '', next: '', confirm: '' });
+  const [pinError, setPinError] = useState('');
+  const [pinSuccess, setPinSuccess] = useState('');
+  const [pinLoading, setPinLoading] = useState(false);
 
   // ── Entries state ────────────────────────────────────────────────────────────
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -121,6 +127,26 @@ export function AdminClient({ adminName }: { adminName: string }) {
     fetchUsers();
   }
 
+  // ── Change PIN ───────────────────────────────────────────────────────────────
+  async function handleChangePIN(e: React.FormEvent) {
+    e.preventDefault();
+    setPinError('');
+    setPinSuccess('');
+    if (pinForm.next.length < 4) { setPinError('New PIN must be at least 4 digits.'); return; }
+    if (pinForm.next !== pinForm.confirm) { setPinError('New PINs do not match.'); return; }
+    setPinLoading(true);
+    const res = await fetch('/api/admin/pin', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ currentPin: pinForm.current, newPin: pinForm.next }),
+    });
+    const json = await res.json();
+    setPinLoading(false);
+    if (!res.ok) { setPinError(json.error); return; }
+    setPinSuccess('PIN updated successfully! Use your new PIN next time you sign in.');
+    setPinForm({ current: '', next: '', confirm: '' });
+  }
+
   // ── Edit entry ───────────────────────────────────────────────────────────────
   function startEdit(entry: Entry) {
     setEditingId(entry.id);
@@ -179,7 +205,7 @@ export function AdminClient({ adminName }: { adminName: string }) {
       <main className="mx-auto max-w-6xl px-4 py-8">
         {/* Tabs */}
         <div className="flex gap-1 mb-6 bg-stone-100 p-1 rounded-lg w-fit">
-          {(['entries', 'users'] as Tab[]).map(t => (
+          {(['entries', 'users', 'settings'] as Tab[]).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -189,7 +215,7 @@ export function AdminClient({ adminName }: { adminName: string }) {
                   : 'text-stone-500 hover:text-stone-700'
               }`}
             >
-              {t === 'entries' ? `Entries (${entries.length})` : `Users (${users.length})`}
+              {t === 'entries' ? `Entries (${entries.length})` : t === 'users' ? `Users (${users.length})` : '⚙️ Settings'}
             </button>
           ))}
         </div>
@@ -480,6 +506,62 @@ export function AdminClient({ adminName }: { adminName: string }) {
                   </table>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+        {/* ── SETTINGS TAB ────────────────────────────────────────────────────── */}
+        {tab === 'settings' && (
+          <div className="max-w-md space-y-6">
+            <h2 className="text-lg font-semibold text-stone-800">Admin Settings</h2>
+
+            {/* Change PIN */}
+            <div className="bg-white rounded-xl border border-stone-200 p-5">
+              <h3 className="text-sm font-semibold text-stone-700 mb-1">Change Admin PIN</h3>
+              <p className="text-xs text-stone-400 mb-4">Your PIN must be at least 4 digits. You&apos;ll need it next time you sign in.</p>
+              <form onSubmit={handleChangePIN} className="flex flex-col gap-3">
+                <div>
+                  <label className="block text-xs text-stone-500 mb-1">Current PIN</label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="••••"
+                    value={pinForm.current}
+                    onChange={e => setPinForm(f => ({ ...f, current: e.target.value }))}
+                    className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-stone-500 mb-1">New PIN</label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="••••"
+                    value={pinForm.next}
+                    onChange={e => setPinForm(f => ({ ...f, next: e.target.value }))}
+                    className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-stone-500 mb-1">Confirm New PIN</label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="••••"
+                    value={pinForm.confirm}
+                    onChange={e => setPinForm(f => ({ ...f, confirm: e.target.value }))}
+                    className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  />
+                </div>
+                {pinError && <p className="text-red-500 text-xs">{pinError}</p>}
+                {pinSuccess && <p className="text-green-600 text-xs font-medium">{pinSuccess}</p>}
+                <button
+                  type="submit"
+                  disabled={pinLoading}
+                  className="bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50 w-fit"
+                >
+                  {pinLoading ? 'Saving…' : 'Update PIN'}
+                </button>
+              </form>
             </div>
           </div>
         )}

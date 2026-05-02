@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { scryptSync, timingSafeEqual } from 'crypto';
 import { getSupabaseServer } from '@/lib/supabase';
 import { COOKIE_NAME, serializeAuthCookie } from '@/lib/auth';
 
@@ -6,6 +7,15 @@ const ADMIN_EMAIL = 'basemmorkos98@gmail.com';
 
 function toTitleCase(str: string): string {
   return str.trim().toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function verifyStoredPin(pin: string, stored: string): boolean {
+  const [salt, hash] = stored.split(':');
+  if (!salt || !hash) return false;
+  try {
+    const attempt = scryptSync(pin, salt, 64).toString('hex');
+    return timingSafeEqual(Buffer.from(attempt, 'hex'), Buffer.from(hash, 'hex'));
+  } catch { return false; }
 }
 
 export async function POST(req: NextRequest) {
@@ -25,8 +35,24 @@ export async function POST(req: NextRequest) {
     // Admin PIN check — only for the admin account
     if (email === ADMIN_EMAIL) {
       const pin = (body.pin as string)?.trim();
-      const adminPin = process.env.ADMIN_PIN;
-      if (!adminPin || pin !== adminPin) {
+      if (!pin) {
+        return NextResponse.json({ error: 'Incorrect PIN. Please try again.' }, { status: 403 });
+      }
+      const supabaseForPin = getSupabaseServer();
+      const { data: settings } = await supabaseForPin
+        .from('admin_settings')
+        .select('pin_hash')
+        .eq('id', 'singleton')
+        .maybeSingle();
+
+      let valid = false;
+      if (settings?.pin_hash) {
+        valid = verifyStoredPin(pin, settings.pin_hash);
+      } else {
+        // Fallback to env var (plain comparison) before any PIN has been set via the app
+        valid = pin === process.env.ADMIN_PIN;
+      }
+      if (!valid) {
         return NextResponse.json({ error: 'Incorrect PIN. Please try again.' }, { status: 403 });
       }
     }
