@@ -29,7 +29,7 @@ async function sendAdminInviteEmail(to: string, name: string, token: string): Pr
   await resend.emails.send({
     from,
     to,
-    subject: 'You've been made an admin — set your PIN',
+    subject: "You've been made an admin — set your PIN",
     html: `
       <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;background:#fff;">
         <h2 style="color:#1c1917;margin:0 0 8px;">Hi ${escapeHtml(name)} 👋</h2>
