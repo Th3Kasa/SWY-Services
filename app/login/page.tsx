@@ -151,7 +151,6 @@ export default function LoginPage() {
                 className="block"
               />
             </div>
-            <p className="text-[11px] text-stone-400 mt-2 font-mono">swy-services.vercel.app</p>
           </div>
         </motion.div>
       </motion.div>

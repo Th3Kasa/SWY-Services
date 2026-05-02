@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
 
     if (existing && existing.full_name.toLowerCase() !== name.toLowerCase()) {
       return NextResponse.json(
-        { error: `This email is already registered to ${existing.full_name}. Please use your own email address.` },
+        { error: 'Wrong information. Please check your name and email and try again.' },
         { status: 409 }
       );
     }
