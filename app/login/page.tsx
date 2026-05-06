@@ -185,7 +185,7 @@ export default function LoginPage() {
               onBlur={() => validateField('email')}
               error={errors.email}
             />
-            {isAdmin && (
+            {isAdmin && nameValid && emailValid && (
               <Input
                 label="Admin PIN"
                 type="password"
