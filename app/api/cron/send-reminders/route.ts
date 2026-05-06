@@ -63,23 +63,27 @@ export async function GET(req: NextRequest) {
 
       const submitterName = escapeHtml(submitter?.full_name ?? entry.team);
 
-      const formattedDate = new Date(entry.date + 'T00:00:00').toLocaleDateString('en-AU', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      });
+      const dateObj = new Date(entry.date + 'T00:00:00');
+      const weekday = dateObj.toLocaleDateString('en-AU', { weekday: 'long' });
+      const monthName = dateObj.toLocaleDateString('en-AU', { month: 'long' });
+      const dayNum = dateObj.getDate();
+      const yearNum = dateObj.getFullYear();
+      const numericDate = `${String(dayNum).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}/${yearNum}`;
+      const formattedDate = `${weekday}, ${dayNum} ${monthName} ${yearNum}`;
 
       let allSent = true;
 
       // 1. Email the submitter
       const submitterSent = await sendEmail({
         to: entry.created_by_email,
-        subject: `Reminder: ${service.name} is in 5 days`,
+        subject: `Reminder: ${service.name} is in 5 days (${numericDate})`,
         html: buildSubmitterEmail({
           submitterName,
           serviceName: escapeHtml(service.name),
-          formattedDate: escapeHtml(formattedDate),
+          weekday: escapeHtml(weekday),
+          dayNum,
+          monthName: escapeHtml(monthName),
+          numericDate,
           team: escapeHtml(entry.team),
           what: escapeHtml(entry.what),
           serviceEmoji: service.iconEmoji,
@@ -91,13 +95,16 @@ export async function GET(req: NextRequest) {
       if (service.leaderEmail) {
         const leaderSent = await sendEmail({
           to: service.leaderEmail,
-          subject: `Follow-up needed: ${service.name} on ${formattedDate}`,
+          subject: `Follow-up: ${service.name} on ${numericDate}`,
           html: buildLeaderEmail({
             leaderName: escapeHtml(service.leader),
             submitterName,
             submitterEmail: escapeHtml(entry.created_by_email),
             serviceName: escapeHtml(service.name),
-            formattedDate: escapeHtml(formattedDate),
+            weekday: escapeHtml(weekday),
+            dayNum,
+            monthName: escapeHtml(monthName),
+            numericDate,
             team: escapeHtml(entry.team),
             what: escapeHtml(entry.what),
             serviceEmoji: service.iconEmoji,
@@ -149,76 +156,97 @@ async function sendEmail({ to, subject, html }: { to: string; subject: string; h
   }
 }
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://swy-services.vercel.app';
+
 function buildSubmitterEmail({
   submitterName,
   serviceName,
-  formattedDate,
+  weekday,
+  dayNum,
+  monthName,
+  numericDate,
   team,
   what,
   serviceEmoji,
 }: {
   submitterName: string;
   serviceName: string;
-  formattedDate: string;
+  weekday: string;
+  dayNum: number;
+  monthName: string;
+  numericDate: string;
   team: string;
   what: string;
   serviceEmoji: string;
 }): string {
   return `<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0" /></head>
-<body style="margin:0;padding:0;background:#fafaf9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#fafaf9;padding:32px 16px;">
+<head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Service Reminder</title>
+</head>
+<body style="margin:0;padding:0;background:#f5f0e8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1c1917;">
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#f5f0e8;padding:24px 12px;">
     <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.06);">
-        <tr>
-          <td style="background:linear-gradient(135deg,#f59e0b,#d97706);padding:28px 32px;text-align:center;">
-            <div style="font-size:40px;margin-bottom:8px;">${serviceEmoji}</div>
-            <h1 style="margin:0;color:#ffffff;font-size:20px;font-weight:700;">St Wanas Youth Services</h1>
-            <p style="margin:4px 0 0;color:rgba(255,255,255,0.85);font-size:13px;">Service Reminder</p>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:32px;">
-            <p style="margin:0 0 8px;color:#1c1917;font-size:18px;font-weight:700;">Hi ${submitterName}! 👋</p>
-            <p style="margin:0 0 24px;color:#57534e;font-size:15px;line-height:1.7;">
-              Just a friendly heads-up — you're running <strong style="color:#1c1917;">${serviceName}</strong> in <strong style="color:#d97706;">5 days</strong>. Make sure you're all prepared and ready to go! 🙌
-            </p>
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;margin-bottom:24px;">
-              <tr><td style="padding:20px 24px;">
-                <table width="100%" cellpadding="0" cellspacing="0">
-                  <tr><td style="padding:8px 0;border-bottom:1px solid #fef3c7;">
-                    <span style="color:#92400e;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">📅 Date</span><br />
-                    <span style="color:#1c1917;font-size:15px;font-weight:600;margin-top:3px;display:block;">${formattedDate}</span>
-                  </td></tr>
-                  <tr><td style="padding:8px 0;border-bottom:1px solid #fef3c7;">
-                    <span style="color:#92400e;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">🎯 Service</span><br />
-                    <span style="color:#1c1917;font-size:15px;font-weight:600;margin-top:3px;display:block;">${serviceName}</span>
-                  </td></tr>
-                  <tr><td style="padding:8px 0;border-bottom:1px solid #fef3c7;">
-                    <span style="color:#92400e;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">👥 Team</span><br />
-                    <span style="color:#1c1917;font-size:15px;margin-top:3px;display:block;">${team}</span>
-                  </td></tr>
-                  <tr><td style="padding:8px 0;">
-                    <span style="color:#92400e;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">📋 What you're doing</span><br />
-                    <span style="color:#1c1917;font-size:15px;margin-top:3px;display:block;">${what}</span>
-                  </td></tr>
-                </table>
-              </td></tr>
-            </table>
-            <p style="margin:0 0 8px;color:#57534e;font-size:14px;line-height:1.6;">
-              If you can't make it or need help, please reach out to your service leader as soon as possible so they can arrange a replacement in time.
-            </p>
-            <p style="margin:0;color:#a8a29e;font-size:12px;margin-top:20px;">
-              This reminder was sent automatically by the St Wanas Youth Services scheduling app.
-            </p>
-          </td>
-        </tr>
-        <tr>
-          <td style="background:#f5f5f4;padding:16px 32px;text-align:center;">
-            <p style="margin:0;color:#a8a29e;font-size:12px;">St Wanas Coptic Orthodox Church · Youth Group</p>
-          </td>
-        </tr>
+      <table width="560" cellpadding="0" cellspacing="0" role="presentation" style="max-width:560px;background:#ffffff;border-radius:20px;overflow:hidden;border:1px solid #ede4d3;">
+
+        <!-- Brand bar -->
+        <tr><td style="padding:20px 28px;background:#ffffff;border-bottom:1px solid #f5efe4;">
+          <table width="100%" cellpadding="0" cellspacing="0" role="presentation"><tr>
+            <td style="font-size:13px;font-weight:700;color:#92400e;letter-spacing:0.04em;text-transform:uppercase;">⛪ St Wanas Youth</td>
+            <td align="right" style="font-size:11px;color:#a8a29e;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;">Service Reminder</td>
+          </tr></table>
+        </td></tr>
+
+        <!-- Hero countdown -->
+        <tr><td style="padding:36px 28px 24px;text-align:center;background:linear-gradient(180deg,#fffbeb 0%,#ffffff 100%);">
+          <div style="font-size:56px;line-height:1;margin-bottom:6px;">${serviceEmoji}</div>
+          <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:#a8a29e;letter-spacing:0.08em;text-transform:uppercase;">In</p>
+          <p style="margin:0 0 4px;font-size:64px;line-height:1;font-weight:800;color:#d97706;letter-spacing:-0.02em;">5</p>
+          <p style="margin:0 0 18px;font-size:18px;font-weight:700;color:#1c1917;">days</p>
+          <p style="margin:0;font-size:22px;font-weight:700;color:#1c1917;line-height:1.3;">${serviceName}</p>
+          <p style="margin:8px 0 0;font-size:14px;color:#78716c;">${weekday}, ${dayNum} ${monthName} · ${numericDate}</p>
+        </td></tr>
+
+        <!-- Greeting -->
+        <tr><td style="padding:28px 28px 8px;">
+          <p style="margin:0 0 12px;font-size:18px;font-weight:700;color:#1c1917;">Hi ${submitterName} 👋</p>
+          <p style="margin:0;font-size:15px;line-height:1.65;color:#57534e;">
+            This is your friendly heads-up that you're running <strong style="color:#1c1917;">${serviceName}</strong> in <strong style="color:#d97706;">5 days</strong>. A good time to start getting things ready! 🙌
+          </p>
+        </td></tr>
+
+        <!-- Details card -->
+        <tr><td style="padding:20px 28px 8px;">
+          <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="border:1px solid #ede4d3;border-radius:14px;background:#fdfaf3;">
+            <tr><td style="padding:18px 20px;border-bottom:1px solid #f5efe4;">
+              <p style="margin:0 0 2px;font-size:11px;font-weight:700;color:#a16207;text-transform:uppercase;letter-spacing:0.06em;">Team</p>
+              <p style="margin:0;font-size:15px;font-weight:600;color:#1c1917;">${team}</p>
+            </td></tr>
+            <tr><td style="padding:18px 20px;">
+              <p style="margin:0 0 2px;font-size:11px;font-weight:700;color:#a16207;text-transform:uppercase;letter-spacing:0.06em;">What you're doing</p>
+              <p style="margin:0;font-size:15px;color:#1c1917;line-height:1.5;">${what}</p>
+            </td></tr>
+          </table>
+        </td></tr>
+
+        <!-- CTA -->
+        <tr><td align="center" style="padding:24px 28px 8px;">
+          <a href="${APP_URL}/my-entries" style="display:inline-block;background:#d97706;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:13px 32px;border-radius:12px;">Open in app →</a>
+        </td></tr>
+
+        <!-- Note -->
+        <tr><td style="padding:20px 28px 28px;">
+          <p style="margin:0;font-size:13px;line-height:1.6;color:#78716c;">
+            Can't make it? Please reach out to your service leader as soon as possible so a replacement can be arranged.
+          </p>
+        </td></tr>
+
+        <!-- Footer -->
+        <tr><td style="background:#fafaf9;padding:18px 28px;text-align:center;border-top:1px solid #f5efe4;">
+          <p style="margin:0 0 4px;font-size:12px;font-weight:600;color:#78716c;">St Wanas Coptic Orthodox Church · Youth Group</p>
+          <p style="margin:0;font-size:11px;color:#a8a29e;">Sent automatically · Please don't reply to this email.</p>
+        </td></tr>
+
       </table>
     </td></tr>
   </table>
@@ -231,7 +259,10 @@ function buildLeaderEmail({
   submitterName,
   submitterEmail,
   serviceName,
-  formattedDate,
+  weekday,
+  dayNum,
+  monthName,
+  numericDate,
   team,
   what,
   serviceEmoji,
@@ -240,67 +271,86 @@ function buildLeaderEmail({
   submitterName: string;
   submitterEmail: string;
   serviceName: string;
-  formattedDate: string;
+  weekday: string;
+  dayNum: number;
+  monthName: string;
+  numericDate: string;
   team: string;
   what: string;
   serviceEmoji: string;
 }): string {
   return `<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0" /></head>
-<body style="margin:0;padding:0;background:#fafaf9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#fafaf9;padding:32px 16px;">
+<head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Leader Follow-Up</title>
+</head>
+<body style="margin:0;padding:0;background:#f0eef5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1c1917;">
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#f0eef5;padding:24px 12px;">
     <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.06);">
-        <tr>
-          <td style="background:linear-gradient(135deg,#7c3aed,#6d28d9);padding:28px 32px;text-align:center;">
-            <div style="font-size:40px;margin-bottom:8px;">${serviceEmoji}</div>
-            <h1 style="margin:0;color:#ffffff;font-size:20px;font-weight:700;">St Wanas Youth Services</h1>
-            <p style="margin:4px 0 0;color:rgba(255,255,255,0.85);font-size:13px;">Leader Follow-Up Reminder</p>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:32px;">
-            <p style="margin:0 0 8px;color:#1c1917;font-size:18px;font-weight:700;">Hi ${leaderName}! 👋</p>
-            <p style="margin:0 0 24px;color:#57534e;font-size:15px;line-height:1.7;">
-              <strong style="color:#1c1917;">${submitterName}</strong> is running <strong style="color:#1c1917;">${serviceName}</strong> in <strong style="color:#7c3aed;">5 days</strong>. We've already sent them a reminder — but as the service leader, please follow up with them to make sure they're all set. If they can't make it, now's the time to find a replacement! 💪
-            </p>
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:12px;margin-bottom:24px;">
-              <tr><td style="padding:20px 24px;">
-                <table width="100%" cellpadding="0" cellspacing="0">
-                  <tr><td style="padding:8px 0;border-bottom:1px solid #ede9fe;">
-                    <span style="color:#5b21b6;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">📅 Date</span><br />
-                    <span style="color:#1c1917;font-size:15px;font-weight:600;margin-top:3px;display:block;">${formattedDate}</span>
-                  </td></tr>
-                  <tr><td style="padding:8px 0;border-bottom:1px solid #ede9fe;">
-                    <span style="color:#5b21b6;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">🎯 Service</span><br />
-                    <span style="color:#1c1917;font-size:15px;font-weight:600;margin-top:3px;display:block;">${serviceName}</span>
-                  </td></tr>
-                  <tr><td style="padding:8px 0;border-bottom:1px solid #ede9fe;">
-                    <span style="color:#5b21b6;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">👤 Running it</span><br />
-                    <span style="color:#1c1917;font-size:15px;margin-top:3px;display:block;">${submitterName} <span style="color:#a8a29e;font-size:13px;">(${submitterEmail})</span></span>
-                  </td></tr>
-                  <tr><td style="padding:8px 0;border-bottom:1px solid #ede9fe;">
-                    <span style="color:#5b21b6;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">👥 Full Team</span><br />
-                    <span style="color:#1c1917;font-size:15px;margin-top:3px;display:block;">${team}</span>
-                  </td></tr>
-                  <tr><td style="padding:8px 0;">
-                    <span style="color:#5b21b6;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">📋 What they're doing</span><br />
-                    <span style="color:#1c1917;font-size:15px;margin-top:3px;display:block;">${what}</span>
-                  </td></tr>
-                </table>
-              </td></tr>
-            </table>
-            <p style="margin:0;color:#a8a29e;font-size:12px;margin-top:20px;">
-              This reminder was sent automatically by the St Wanas Youth Services scheduling app.
-            </p>
-          </td>
-        </tr>
-        <tr>
-          <td style="background:#f5f5f4;padding:16px 32px;text-align:center;">
-            <p style="margin:0;color:#a8a29e;font-size:12px;">St Wanas Coptic Orthodox Church · Youth Group</p>
-          </td>
-        </tr>
+      <table width="560" cellpadding="0" cellspacing="0" role="presentation" style="max-width:560px;background:#ffffff;border-radius:20px;overflow:hidden;border:1px solid #e2dff0;">
+
+        <!-- Brand bar -->
+        <tr><td style="padding:20px 28px;background:#ffffff;border-bottom:1px solid #ece9f5;">
+          <table width="100%" cellpadding="0" cellspacing="0" role="presentation"><tr>
+            <td style="font-size:13px;font-weight:700;color:#5b21b6;letter-spacing:0.04em;text-transform:uppercase;">⛪ St Wanas Youth</td>
+            <td align="right" style="font-size:11px;color:#a8a29e;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;">Leader Follow-Up</td>
+          </tr></table>
+        </td></tr>
+
+        <!-- Hero countdown -->
+        <tr><td style="padding:36px 28px 24px;text-align:center;background:linear-gradient(180deg,#f5f3ff 0%,#ffffff 100%);">
+          <div style="font-size:56px;line-height:1;margin-bottom:6px;">${serviceEmoji}</div>
+          <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:#a8a29e;letter-spacing:0.08em;text-transform:uppercase;">In</p>
+          <p style="margin:0 0 4px;font-size:64px;line-height:1;font-weight:800;color:#7c3aed;letter-spacing:-0.02em;">5</p>
+          <p style="margin:0 0 18px;font-size:18px;font-weight:700;color:#1c1917;">days</p>
+          <p style="margin:0;font-size:22px;font-weight:700;color:#1c1917;line-height:1.3;">${serviceName}</p>
+          <p style="margin:8px 0 0;font-size:14px;color:#78716c;">${weekday}, ${dayNum} ${monthName} · ${numericDate}</p>
+        </td></tr>
+
+        <!-- Greeting -->
+        <tr><td style="padding:28px 28px 8px;">
+          <p style="margin:0 0 12px;font-size:18px;font-weight:700;color:#1c1917;">Hi ${leaderName} 👋</p>
+          <p style="margin:0;font-size:15px;line-height:1.65;color:#57534e;">
+            <strong style="color:#1c1917;">${submitterName}</strong> is running <strong style="color:#1c1917;">${serviceName}</strong> in <strong style="color:#7c3aed;">5 days</strong>. They've also been reminded — as the service leader, please follow up to make sure they're all set, or arrange a replacement if they can't make it. 💪
+          </p>
+        </td></tr>
+
+        <!-- Details card -->
+        <tr><td style="padding:20px 28px 8px;">
+          <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="border:1px solid #e2dff0;border-radius:14px;background:#faf8ff;">
+            <tr><td style="padding:18px 20px;border-bottom:1px solid #ece9f5;">
+              <p style="margin:0 0 2px;font-size:11px;font-weight:700;color:#6d28d9;text-transform:uppercase;letter-spacing:0.06em;">Running it</p>
+              <p style="margin:0;font-size:15px;font-weight:600;color:#1c1917;">${submitterName} <span style="color:#a8a29e;font-size:13px;font-weight:400;">· ${submitterEmail}</span></p>
+            </td></tr>
+            <tr><td style="padding:18px 20px;border-bottom:1px solid #ece9f5;">
+              <p style="margin:0 0 2px;font-size:11px;font-weight:700;color:#6d28d9;text-transform:uppercase;letter-spacing:0.06em;">Full team</p>
+              <p style="margin:0;font-size:15px;color:#1c1917;">${team}</p>
+            </td></tr>
+            <tr><td style="padding:18px 20px;">
+              <p style="margin:0 0 2px;font-size:11px;font-weight:700;color:#6d28d9;text-transform:uppercase;letter-spacing:0.06em;">What they're doing</p>
+              <p style="margin:0;font-size:15px;color:#1c1917;line-height:1.5;">${what}</p>
+            </td></tr>
+          </table>
+        </td></tr>
+
+        <!-- CTA -->
+        <tr><td align="center" style="padding:24px 28px 8px;">
+          <a href="${APP_URL}/calendar" style="display:inline-block;background:#7c3aed;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:13px 32px;border-radius:12px;">View calendar →</a>
+        </td></tr>
+
+        <!-- Note -->
+        <tr><td style="padding:20px 28px 28px;">
+          <p style="margin:0;font-size:13px;line-height:1.6;color:#78716c;">
+            Tip: Reach out to ${submitterName} now — there's still time to swap if anything has changed.
+          </p>
+        </td></tr>
+
+        <!-- Footer -->
+        <tr><td style="background:#fafaf9;padding:18px 28px;text-align:center;border-top:1px solid #ece9f5;">
+          <p style="margin:0 0 4px;font-size:12px;font-weight:600;color:#78716c;">St Wanas Coptic Orthodox Church · Youth Group</p>
+          <p style="margin:0;font-size:11px;color:#a8a29e;">Sent automatically · Please don't reply to this email.</p>
+        </td></tr>
+
       </table>
     </td></tr>
   </table>
