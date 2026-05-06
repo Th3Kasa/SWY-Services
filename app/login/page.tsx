@@ -59,6 +59,11 @@ export default function LoginPage() {
     return errs;
   }
 
+  function validateField(field: 'name' | 'email') {
+    const errs = validate();
+    setErrors((prev) => ({ ...prev, [field]: errs[field] ?? '' }));
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const errs = validate();
@@ -67,7 +72,7 @@ export default function LoginPage() {
       return;
     }
     if (!captchaToken) {
-      setErrors({ submit: 'Please complete the reCAPTCHA.' });
+      setErrors({ submit: 'Please complete the reCAPTCHA check below before signing in.' });
       return;
     }
 
@@ -153,7 +158,11 @@ export default function LoginPage() {
               required
               autoComplete="name"
               value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              onChange={(e) => {
+                setForm((f) => ({ ...f, name: e.target.value }));
+                if (errors.name) setErrors((p) => ({ ...p, name: '' }));
+              }}
+              onBlur={() => validateField('name')}
               error={errors.name}
               helperText="First and last name, please"
             />
@@ -164,7 +173,11 @@ export default function LoginPage() {
               required
               autoComplete="email"
               value={form.email}
-              onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+              onChange={(e) => {
+                setForm((f) => ({ ...f, email: e.target.value }));
+                if (errors.email) setErrors((p) => ({ ...p, email: '' }));
+              }}
+              onBlur={() => validateField('email')}
               error={errors.email}
             />
             {isAdmin && (
@@ -191,7 +204,7 @@ export default function LoginPage() {
               isLoading={loading}
               size="lg"
               className="w-full mt-1"
-              disabled={!captchaToken || loading}
+              disabled={loading}
             >
               Sign In
             </Button>
