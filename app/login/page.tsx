@@ -94,6 +94,7 @@ export default function LoginPage() {
         return;
       }
 
+      sessionStorage.setItem('swy_session', '1');
       router.push('/');
       router.refresh();
     } catch {

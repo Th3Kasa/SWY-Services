@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/',
-      maxAge: 60 * 60 * 24 * 30, // 30 days
+      // No maxAge → session cookie: browser deletes it when the browser session ends
     });
 
     return response;
