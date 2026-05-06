@@ -56,10 +56,13 @@ export default function LoginPage() {
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
       errs.email = 'Please enter a valid email address';
     }
+    if (isAdmin && !form.pin.trim()) {
+      errs.pin = 'Please enter your Admin PIN';
+    }
     return errs;
   }
 
-  function validateField(field: 'name' | 'email') {
+  function validateField(field: 'name' | 'email' | 'pin') {
     const errs = validate();
     setErrors((prev) => ({ ...prev, [field]: errs[field] ?? '' }));
   }
@@ -93,7 +96,9 @@ export default function LoginPage() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setErrors({ submit: data.error || 'Something went wrong. Please try again.' });
+        const msg = data.error || 'Something went wrong. Please try again.';
+        const isPinError = res.status === 403;
+        setErrors(isPinError ? { pin: msg } : { submit: msg });
         recaptchaRef.current?.reset();
         setCaptchaToken(null);
         return;
@@ -188,8 +193,12 @@ export default function LoginPage() {
                 required
                 autoComplete="current-password"
                 value={form.pin}
-                onChange={(e) => setForm((f) => ({ ...f, pin: e.target.value }))}
-                error={errors.submit?.includes('PIN') ? errors.submit : undefined}
+                onChange={(e) => {
+                  setForm((f) => ({ ...f, pin: e.target.value }));
+                  if (errors.pin) setErrors((prev) => ({ ...prev, pin: '' }));
+                }}
+                onBlur={() => validateField('pin')}
+                error={errors.pin}
               />
             )}
 
