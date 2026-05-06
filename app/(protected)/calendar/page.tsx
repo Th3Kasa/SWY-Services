@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { getSupabaseServer, ServiceEntry } from '@/lib/supabase';
 import { SERVICES } from '@/lib/services';
 import { CalendarClient } from './calendar-client';

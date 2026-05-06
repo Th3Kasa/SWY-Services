@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { getAuthUser } from '@/lib/auth';
 import { getSupabaseServer, ServiceEntry } from '@/lib/supabase';
 import { MyEntriesClient } from './my-entries-client';
