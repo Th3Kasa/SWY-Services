@@ -18,6 +18,14 @@ export async function POST(req: NextRequest) {
   const raw = req.cookies.get(COOKIE_NAME)?.value;
   const user = getAuthUserFromCookie(raw)!;
 
+  // Allow overriding the recipient (useful when Resend account owner != admin email).
+  let overrideRecipient: string | undefined;
+  try {
+    const body = await req.json();
+    if (typeof body?.to === 'string' && body.to.trim()) overrideRecipient = body.to.trim().toLowerCase();
+  } catch { /* no body, that's fine */ }
+  const recipient = overrideRecipient || user.email;
+
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 
@@ -65,7 +73,7 @@ export async function POST(req: NextRequest) {
 
     const { error } = await resend.emails.send({
       from,
-      to: user.email, // force-send to admin (works on Resend free tier)
+      to: recipient,
       subject: `[TEST] Reminder: ${service.name} is in 5 days`,
       html: `<div style="font-family:sans-serif;padding:24px;max-width:600px;">
         <h2>🧪 Test Reminder Email</h2>
@@ -83,14 +91,14 @@ export async function POST(req: NextRequest) {
     if (error) {
       results.push({ id: entry.id, service: service.name, status: 'failed', detail: error.message });
     } else {
-      results.push({ id: entry.id, service: service.name, status: 'sent', detail: `Test email sent to ${user.email}` });
+      results.push({ id: entry.id, service: service.name, status: 'sent', detail: `Test email sent to ${recipient}` });
     }
   }
 
   return NextResponse.json({
     ok: results.some((r) => r.status === 'sent'),
     targetDate,
-    sentTo: user.email,
+    sentTo: recipient,
     fromAddress: from,
     results,
   });

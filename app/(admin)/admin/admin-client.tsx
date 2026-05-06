@@ -689,12 +689,17 @@ function TestReminderCard() {
   const [status, setStatus] = useState<'idle' | 'sending' | 'ok' | 'error' | 'info'>('idle');
   const [message, setMessage] = useState('');
   const [details, setDetails] = useState<any>(null);
+  const [recipient, setRecipient] = useState('');
 
   async function handleTest() {
     setStatus('sending');
     setMessage('');
     setDetails(null);
-    const res = await fetch('/api/admin/test-reminder', { method: 'POST' });
+    const res = await fetch('/api/admin/test-reminder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(recipient.trim() ? { to: recipient.trim() } : {}),
+    });
     const json = await res.json();
     setDetails(json);
 
@@ -716,8 +721,18 @@ function TestReminderCard() {
     <div className="bg-white rounded-xl border border-stone-200 p-5">
       <h3 className="text-sm font-semibold text-stone-700 mb-1">Test Reminder System</h3>
       <p className="text-xs text-stone-400 mb-4">
-        Simulates the daily cron — looks for entries dated <strong>5 days from today</strong> and sends a test reminder to your admin email.
+        Simulates the daily cron — looks for entries dated <strong>5 days from today</strong> and sends a test reminder.
+        Without a verified Resend domain, you can only send to the email that owns your Resend account.
       </p>
+      <div className="flex flex-col sm:flex-row gap-2 mb-3">
+        <input
+          type="email"
+          placeholder="Send test to (defaults to your admin email)"
+          value={recipient}
+          onChange={e => setRecipient(e.target.value)}
+          className="flex-1 border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+        />
+      </div>
       <button
         onClick={handleTest}
         disabled={status === 'sending'}
