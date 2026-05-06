@@ -626,6 +626,9 @@ export function AdminClient({ adminName, userNames }: { adminName: string; userN
             {/* Test email */}
             <TestEmailCard />
 
+            {/* Test reminder cron */}
+            <TestReminderCard />
+
             {/* Change PIN */}
             <div className="bg-white rounded-xl border border-stone-200 p-5">
               <h3 className="text-sm font-semibold text-stone-700 mb-1">Change Admin PIN</h3>
@@ -678,6 +681,58 @@ export function AdminClient({ adminName, userNames }: { adminName: string; userN
           </div>
         )}
       </main>
+    </div>
+  );
+}
+
+function TestReminderCard() {
+  const [status, setStatus] = useState<'idle' | 'sending' | 'ok' | 'error' | 'info'>('idle');
+  const [message, setMessage] = useState('');
+  const [details, setDetails] = useState<any>(null);
+
+  async function handleTest() {
+    setStatus('sending');
+    setMessage('');
+    setDetails(null);
+    const res = await fetch('/api/admin/test-reminder', { method: 'POST' });
+    const json = await res.json();
+    setDetails(json);
+
+    if (!res.ok) {
+      setStatus('error');
+      setMessage(json.error ?? 'Unknown error');
+      return;
+    }
+    if (json.ok) {
+      setStatus('ok');
+      setMessage(`Test reminder sent to ${json.sentTo}. Check your inbox.`);
+    } else {
+      setStatus('info');
+      setMessage(json.reason ?? 'No eligible entries.');
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-stone-200 p-5">
+      <h3 className="text-sm font-semibold text-stone-700 mb-1">Test Reminder System</h3>
+      <p className="text-xs text-stone-400 mb-4">
+        Simulates the daily cron — looks for entries dated <strong>5 days from today</strong> and sends a test reminder to your admin email.
+      </p>
+      <button
+        onClick={handleTest}
+        disabled={status === 'sending'}
+        className="bg-stone-800 hover:bg-stone-900 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+      >
+        {status === 'sending' ? 'Running…' : 'Run Test Reminder'}
+      </button>
+      {status === 'ok' && <p className="text-green-600 text-xs font-medium mt-3">✅ {message}</p>}
+      {status === 'info' && <p className="text-amber-600 text-xs mt-3">ℹ️ {message}</p>}
+      {status === 'error' && <p className="text-red-500 text-xs mt-3">❌ {message}</p>}
+      {details && (
+        <pre className="mt-3 bg-stone-50 border border-stone-200 rounded-lg p-3 text-[10px] text-stone-600 overflow-auto max-h-64">
+{JSON.stringify(details, null, 2)}
+        </pre>
+      )}
     </div>
   );
 }
