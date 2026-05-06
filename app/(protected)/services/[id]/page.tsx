@@ -27,7 +27,7 @@ async function getEntries(serviceId: string): Promise<ServiceEntry[]> {
 }
 
 async function getSubmitterNames(entries: ServiceEntry[]): Promise<Record<string, string>> {
-  const emails = [...new Set(entries.map((e) => e.created_by_email))];
+  const emails = Array.from(new Set(entries.map((e) => e.created_by_email)));
   if (emails.length === 0) return {};
   try {
     const supabase = getSupabaseServer();

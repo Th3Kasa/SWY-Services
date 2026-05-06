@@ -18,6 +18,7 @@ export function AddEntryForm({ service, onSuccess }: AddEntryFormProps) {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState({ date: '', team: '', what: '' });
+  const [savedDate, setSavedDate] = useState<string | null>(null);
 
   function validate() {
     const errs: Record<string, string> = {};
@@ -61,6 +62,7 @@ export function AddEntryForm({ service, onSuccess }: AddEntryFormProps) {
         return;
       }
 
+      setSavedDate(form.date);
       setForm({ date: '', team: '', what: '' });
       router.refresh();
       onSuccess?.();
@@ -143,6 +145,14 @@ export function AddEntryForm({ service, onSuccess }: AddEntryFormProps) {
       <Button type="submit" isLoading={loading} className="w-full">
         Save Entry
       </Button>
+
+      {savedDate && (
+        <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800 leading-relaxed">
+          ✅ Entry saved! You will receive a reminder email <strong>5 days before</strong> on{' '}
+          <strong>{new Date(savedDate + 'T00:00:00').toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</strong>.
+          Please check your <strong>inbox and spam folder</strong> around that time.
+        </div>
+      )}
     </form>
   );
 }

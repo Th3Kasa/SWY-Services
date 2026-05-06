@@ -53,7 +53,7 @@ const STEPS = [
     n: 4,
     icon: Bell,
     title: 'Get a reminder',
-    body: 'Five days before your service, we\'ll email you and the service leader to make sure everyone\'s prepared. No surprises.',
+    body: 'Five days before your service, we\'ll email you and the service leader to make sure everyone\'s prepared. Please check your inbox and spam folder — reminder emails can sometimes land in spam.',
     color: '#fce7f3',
     accent: 'text-rose-700',
   },

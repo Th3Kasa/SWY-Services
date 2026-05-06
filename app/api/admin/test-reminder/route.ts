@@ -87,9 +87,6 @@ export async function POST(req: NextRequest) {
   <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#f5f0e8;padding:24px 12px;">
     <tr><td align="center">
       <table width="560" cellpadding="0" cellspacing="0" role="presentation" style="max-width:560px;background:#ffffff;border-radius:20px;overflow:hidden;border:1px solid #ede4d3;">
-        <tr><td style="padding:14px 28px;background:#fef3c7;border-bottom:1px solid #fde68a;text-align:center;">
-          <p style="margin:0;font-size:12px;font-weight:700;color:#92400e;letter-spacing:0.06em;text-transform:uppercase;">🧪 Test Email — Real cron would send to ${entry.created_by_email}</p>
-        </td></tr>
         <tr><td style="padding:20px 28px;background:#ffffff;border-bottom:1px solid #f5efe4;">
           <table width="100%" cellpadding="0" cellspacing="0" role="presentation"><tr>
             <td style="font-size:13px;font-weight:700;color:#92400e;letter-spacing:0.04em;text-transform:uppercase;">⛪ St Wanas Youth</td>

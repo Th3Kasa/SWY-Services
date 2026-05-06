@@ -87,6 +87,7 @@ export async function GET(req: NextRequest) {
           team: escapeHtml(entry.team),
           what: escapeHtml(entry.what),
           serviceEmoji: service.iconEmoji,
+          leaderName: escapeHtml(service.leader),
         }),
       });
       if (!submitterSent) allSent = false;
@@ -168,6 +169,7 @@ function buildSubmitterEmail({
   team,
   what,
   serviceEmoji,
+  leaderName,
 }: {
   submitterName: string;
   serviceName: string;
@@ -178,6 +180,7 @@ function buildSubmitterEmail({
   team: string;
   what: string;
   serviceEmoji: string;
+  leaderName: string;
 }): string {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -237,7 +240,7 @@ function buildSubmitterEmail({
         <!-- Note -->
         <tr><td style="padding:20px 28px 28px;">
           <p style="margin:0;font-size:13px;line-height:1.6;color:#78716c;">
-            Can't make it? Please reach out to your service leader as soon as possible so a replacement can be arranged.
+            If you have any issues or are unable to do this service on <strong>${numericDate}</strong>, please contact your service leader <strong>${leaderName}</strong> as soon as possible so they can arrange a replacement in time.
           </p>
         </td></tr>
 
