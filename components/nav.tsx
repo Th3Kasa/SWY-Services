@@ -7,14 +7,12 @@ import { LogOut, Menu, X, LayoutDashboard, BookOpen, CalendarDays, Settings2, He
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 
-const ADMIN_EMAIL = 'basemmorkos98@gmail.com';
-
 interface NavProps {
   userName: string;
-  userEmail: string;
+  isAdmin: boolean;
 }
 
-export function Nav({ userName, userEmail }: NavProps) {
+export function Nav({ userName, isAdmin }: NavProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -60,7 +58,7 @@ export function Nav({ userName, userEmail }: NavProps) {
               {label}
             </Link>
           ))}
-          {userEmail.toLowerCase() === ADMIN_EMAIL && (
+          {isAdmin && (
             <Link
               href="/admin"
               className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
@@ -128,7 +126,7 @@ export function Nav({ userName, userEmail }: NavProps) {
                   {label}
                 </Link>
               ))}
-              {userEmail.toLowerCase() === ADMIN_EMAIL && (
+              {isAdmin && (
                 <Link
                   href="/admin"
                   onClick={() => setMenuOpen(false)}

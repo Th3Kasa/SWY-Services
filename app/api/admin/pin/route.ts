@@ -3,13 +3,13 @@ import { getSupabaseServer } from '@/lib/supabase';
 import { COOKIE_NAME, getAuthUserFromCookie } from '@/lib/auth';
 import { verifyPin, makeStoredPin } from '@/lib/pin';
 
-const ADMIN_EMAIL = 'basemmorkos98@gmail.com';
+const HARDCODED_ADMIN = 'basemmorkos98@gmail.com';
 
-// PATCH /api/admin/pin — change the admin PIN
+// PATCH /api/admin/pin — change the logged-in admin's own PIN
 export async function PATCH(req: NextRequest) {
   const raw = req.cookies.get(COOKIE_NAME)?.value;
   const user = getAuthUserFromCookie(raw);
-  if (!user || user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+  if (!user || user.isAdmin !== true) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -27,32 +27,53 @@ export async function PATCH(req: NextRequest) {
   }
 
   const supabase = getSupabaseServer();
+  const isHardcodedAdmin = user.email.toLowerCase() === HARDCODED_ADMIN;
 
-  const { data: settings } = await supabase
-    .from('admin_settings')
-    .select('pin_hash')
-    .eq('id', 'singleton')
-    .maybeSingle();
-
+  // Verify current PIN
   let currentPinValid = false;
-  if (settings?.pin_hash) {
-    currentPinValid = verifyPin(currentPin, settings.pin_hash);
+
+  if (isHardcodedAdmin) {
+    const { data: settings } = await supabase
+      .from('admin_settings')
+      .select('pin_hash')
+      .eq('id', 'singleton')
+      .maybeSingle();
+
+    if (settings?.pin_hash) {
+      currentPinValid = verifyPin(currentPin, settings.pin_hash);
+    } else {
+      currentPinValid = currentPin === process.env.ADMIN_PIN;
+    }
   } else {
-    // Fallback: compare plain against ADMIN_PIN env var
-    currentPinValid = currentPin === process.env.ADMIN_PIN;
+    // DB admin — verify against users.pin_hash
+    const { data: dbUser } = await supabase
+      .from('users')
+      .select('pin_hash')
+      .eq('email', user.email)
+      .maybeSingle();
+    if (dbUser?.pin_hash) {
+      currentPinValid = verifyPin(currentPin, dbUser.pin_hash);
+    }
   }
 
   if (!currentPinValid) {
     return NextResponse.json({ error: 'Current PIN is incorrect.' }, { status: 403 });
   }
 
+  // Save new PIN
   const newHash = makeStoredPin(newPin);
-  const { error } = await supabase
-    .from('admin_settings')
-    .upsert({ id: 'singleton', pin_hash: newHash, updated_at: new Date().toISOString() });
 
-  if (error) {
-    return NextResponse.json({ error: 'Failed to update PIN.' }, { status: 500 });
+  if (isHardcodedAdmin) {
+    const { error } = await supabase
+      .from('admin_settings')
+      .upsert({ id: 'singleton', pin_hash: newHash, updated_at: new Date().toISOString() });
+    if (error) return NextResponse.json({ error: 'Failed to update PIN.' }, { status: 500 });
+  } else {
+    const { error } = await supabase
+      .from('users')
+      .update({ pin_hash: newHash })
+      .eq('email', user.email);
+    if (error) return NextResponse.json({ error: 'Failed to update PIN.' }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });
