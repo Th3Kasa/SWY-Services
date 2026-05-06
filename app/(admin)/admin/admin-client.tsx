@@ -335,6 +335,7 @@ export function AdminClient({ adminName, userNames }: { adminName: string; userN
                                 <td className="px-4 py-2">
                                   <input
                                     type="date"
+                                    lang="en-GB"
                                     value={editForm.date ?? ''}
                                     onChange={e => setEditForm(f => ({ ...f, date: e.target.value }))}
                                     className="border border-stone-200 rounded px-2 py-1 text-sm w-full focus:outline-none focus:ring-2 focus:ring-amber-400"
@@ -509,7 +510,7 @@ export function AdminClient({ adminName, userNames }: { adminName: string; userN
                                   />
                                 </td>
                                 <td className="px-4 py-2 text-stone-400 text-xs whitespace-nowrap">
-                                  {new Date(user.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                  {user.created_at.slice(8, 10)}/{user.created_at.slice(5, 7)}/{user.created_at.slice(0, 4)}
                                 </td>
                                 <td className="px-4 py-2">
                                   <div className="flex items-center gap-2 justify-end">
@@ -534,7 +535,7 @@ export function AdminClient({ adminName, userNames }: { adminName: string; userN
                                 <td className="px-4 py-3 font-medium text-stone-800">{user.full_name}</td>
                                 <td className="px-4 py-3 text-stone-500">{user.email}</td>
                                 <td className="px-4 py-3 text-stone-400 text-xs whitespace-nowrap">
-                                  {new Date(user.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                  {user.created_at.slice(8, 10)}/{user.created_at.slice(5, 7)}/{user.created_at.slice(0, 4)}
                                 </td>
                                 <td className="px-4 py-3 text-right">
                                   {user.email.toLowerCase() === 'basemmorkos98@gmail.com' ? (

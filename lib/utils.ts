@@ -6,13 +6,8 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatDate(dateStr: string): string {
-  const date = new Date(dateStr + 'T00:00:00');
-  return date.toLocaleDateString('en-AU', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
+  const [y, m, d] = dateStr.slice(0, 10).split('-');
+  return `${d}/${m}/${y}`;
 }
 
 export function isUpcoming(dateStr: string): boolean {

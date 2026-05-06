@@ -273,7 +273,7 @@ function EntryCard({
           <div className="flex items-center gap-1 shrink-0">
             <div className="flex items-center gap-1 text-xs text-stone-400 mr-1">
               <Clock className="h-3 w-3" />
-              <span>{new Date(entry.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}</span>
+              <span>{entry.created_at.slice(8, 10)}/{entry.created_at.slice(5, 7)}/{entry.created_at.slice(0, 4)}</span>
             </div>
             {isOwner && !confirmDelete && (
               <>
@@ -321,6 +321,7 @@ function EntryCard({
               <label className="text-xs font-medium text-stone-500 mb-1 block">Date</label>
               <input
                 type="date"
+                lang="en-GB"
                 value={editForm.date}
                 onChange={(e) => setEditForm(f => ({ ...f, date: e.target.value }))}
                 className="h-9 w-full rounded-xl border border-stone-200 bg-white px-3 text-sm text-stone-900 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"

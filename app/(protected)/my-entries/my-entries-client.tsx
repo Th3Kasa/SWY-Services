@@ -260,6 +260,7 @@ function EntryCard({
               <label className="text-xs font-medium text-stone-500 mb-1 block">Date</label>
               <input
                 type="date"
+                lang="en-GB"
                 value={editForm.date}
                 onChange={(e) => setEditForm(f => ({ ...f, date: e.target.value }))}
                 className="h-9 w-full rounded-xl border border-stone-200 bg-white px-3 text-sm text-stone-900 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"

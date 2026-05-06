@@ -203,7 +203,7 @@ export function CalendarClient({ entries, services, submitterNames }: CalendarCl
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-semibold text-stone-900 text-sm">{svc?.name ?? e.service_id}</span>
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${svc?.badgeBgClass ?? 'bg-stone-100'} ${svc?.textColorClass ?? 'text-stone-600'}`}>
-                        {date.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' })}
+                        {e.date.slice(8, 10)}/{e.date.slice(5, 7)}/{e.date.slice(0, 4)}
                       </span>
                     </div>
                     <p className="text-sm text-stone-700 mt-0.5 font-medium">{e.what}</p>
