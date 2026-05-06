@@ -80,6 +80,7 @@ export function AddEntryForm({ service, onSuccess }: AddEntryFormProps) {
       <Input
         label="Date"
         type="date"
+        lang="en-GB"
         required
         value={form.date}
         onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
