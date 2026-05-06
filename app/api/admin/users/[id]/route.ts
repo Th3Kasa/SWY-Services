@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServer } from '@/lib/supabase';
 import { COOKIE_NAME, getAuthUserFromCookie } from '@/lib/auth';
 import { randomBytes } from 'crypto';
+import { sanitizeUuid, sanitizeName, sanitizeEmail } from '@/lib/sanitize';
 
 function isAdmin(req: NextRequest): boolean {
   const raw = req.cookies.get(COOKIE_NAME)?.value;
@@ -49,11 +50,13 @@ async function sendAdminInviteEmail(to: string, name: string, token: string): Pr
 }
 
 // PATCH /api/admin/users/[id]
-// Body: { makeAdmin: true } | { removeAdmin: true }
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   if (!isAdmin(req)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-  let body: { makeAdmin?: boolean; removeAdmin?: boolean; resendInvite?: boolean; getInviteLink?: boolean };
+  const id = sanitizeUuid(params.id);
+  if (!id) return NextResponse.json({ error: 'Invalid user ID.' }, { status: 400 });
+
+  let body: { makeAdmin?: boolean; removeAdmin?: boolean; resendInvite?: boolean; getInviteLink?: boolean; full_name?: string; email?: string };
   try { body = await req.json(); } catch {
     return NextResponse.json({ error: 'Invalid body.' }, { status: 400 });
   }
@@ -64,10 +67,26 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const { data: target, error: fetchErr } = await supabase
     .from('users')
     .select('id, full_name, email, is_admin, pin_hash, admin_invite_token, admin_invite_token_expires_at')
-    .eq('id', params.id)
+    .eq('id', id)
     .single();
 
   if (fetchErr || !target) return NextResponse.json({ error: 'User not found.' }, { status: 404 });
+
+  // Edit name / email
+  if (body.full_name !== undefined || body.email !== undefined) {
+    const full_name = sanitizeName(body.full_name ?? target.full_name);
+    const email     = sanitizeEmail(body.email ?? target.email);
+    if (!full_name) return NextResponse.json({ error: 'Name cannot be empty.' }, { status: 400 });
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json({ error: 'Invalid email address.' }, { status: 400 });
+    }
+    const { error } = await supabase.from('users').update({ full_name, email }).eq('id', id);
+    if (error) {
+      if (error.code === '23505') return NextResponse.json({ error: 'Email already in use.' }, { status: 409 });
+      return NextResponse.json({ error: 'Failed to update user.' }, { status: 500 });
+    }
+    return NextResponse.json({ success: true });
+  }
 
   if (body.getInviteLink) {
     if (!target.is_admin || target.pin_hash) {
@@ -76,7 +95,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     // Regenerate token so it's always fresh when copying
     const token = randomBytes(32).toString('hex');
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-    await supabase.from('users').update({ admin_invite_token: token, admin_invite_token_expires_at: expires }).eq('id', params.id);
+    await supabase.from('users').update({ admin_invite_token: token, admin_invite_token_expires_at: expires }).eq('id', id);
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://swy-services.vercel.app';
     return NextResponse.json({ link: `${appUrl}/setup-admin-pin?token=${token}` });
   }
@@ -93,7 +112,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     const { error } = await supabase
       .from('users')
       .update({ is_admin: true, admin_invite_token: token, admin_invite_token_expires_at: expires })
-      .eq('id', params.id);
+      .eq('id', id);
 
     if (error) return NextResponse.json({ error: 'Failed to update user.' }, { status: 500 });
 
@@ -109,7 +128,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     const { error } = await supabase
       .from('users')
       .update({ is_admin: false, pin_hash: null, admin_invite_token: null, admin_invite_token_expires_at: null })
-      .eq('id', params.id);
+      .eq('id', id);
 
     if (error) return NextResponse.json({ error: 'Failed to demote user.' }, { status: 500 });
     return NextResponse.json({ success: true });
@@ -122,8 +141,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   if (!isAdmin(req)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
+  const id = sanitizeUuid(params.id);
+  if (!id) return NextResponse.json({ error: 'Invalid user ID.' }, { status: 400 });
+
   const supabase = getSupabaseServer();
-  const { error } = await supabase.from('users').delete().eq('id', params.id);
+  const { error } = await supabase.from('users').delete().eq('id', id);
 
   if (error) return NextResponse.json({ error: 'Failed to delete user.' }, { status: 500 });
   return NextResponse.json({ success: true });

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServer } from '@/lib/supabase';
 import { COOKIE_NAME, getAuthUserFromCookie } from '@/lib/auth';
 import { verifyPin, makeStoredPin } from '@/lib/pin';
+import { sanitizePin } from '@/lib/sanitize';
 
 const HARDCODED_ADMIN = 'basemmorkos98@gmail.com';
 
@@ -18,7 +19,8 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid body.' }, { status: 400 });
   }
 
-  const { currentPin, newPin } = body;
+  const currentPin = sanitizePin(body.currentPin);
+  const newPin     = sanitizePin(body.newPin);
   if (!currentPin || !newPin) {
     return NextResponse.json({ error: 'Both current and new PIN are required.' }, { status: 400 });
   }

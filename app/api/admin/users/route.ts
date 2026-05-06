@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServer } from '@/lib/supabase';
 import { COOKIE_NAME, getAuthUserFromCookie } from '@/lib/auth';
+import { sanitizeName, sanitizeEmail } from '@/lib/sanitize';
 
 function isAdmin(req: NextRequest): boolean {
   const raw = req.cookies.get(COOKIE_NAME)?.value;
@@ -36,8 +37,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
   }
 
-  const full_name = body.full_name?.trim();
-  const email = body.email?.trim().toLowerCase();
+  const full_name = sanitizeName(body.full_name);
+  const email     = sanitizeEmail(body.email);
 
   if (!full_name || !email) {
     return NextResponse.json({ error: 'Name and email are required.' }, { status: 400 });

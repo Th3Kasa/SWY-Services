@@ -2,20 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServer } from '@/lib/supabase';
 import { COOKIE_NAME, serializeAuthCookie } from '@/lib/auth';
 import { verifyPin } from '@/lib/pin';
+import { sanitizeName, sanitizeEmail, sanitizePin, sanitizeToken } from '@/lib/sanitize';
 
 const ADMIN_EMAIL = 'basemmorkos98@gmail.com';
 
 function toTitleCase(str: string): string {
-  return str.trim().toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+  return str.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const name = toTitleCase((body.name as string) ?? '');
-    const email = (body.email as string)?.trim().toLowerCase();
+    const name  = toTitleCase(sanitizeName(body.name));
+    const email = sanitizeEmail(body.email);
+    const pin   = sanitizePin(body.pin);
+    const captchaToken = sanitizeToken(body.captchaToken);
 
-    // Validate
     if (!name) {
       return NextResponse.json({ error: 'Full name is required' }, { status: 400 });
     }
@@ -24,7 +26,6 @@ export async function POST(req: NextRequest) {
     }
 
     // Verify reCAPTCHA token
-    const captchaToken = (body.captchaToken as string)?.trim();
     if (!captchaToken) {
       return NextResponse.json({ error: 'Please complete the reCAPTCHA.' }, { status: 400 });
     }
@@ -60,7 +61,6 @@ export async function POST(req: NextRequest) {
 
     // PIN check for any admin
     if (isAdminUser) {
-      const pin = (body.pin as string)?.trim();
       if (!pin) {
         return NextResponse.json({ error: 'Incorrect PIN. Please try again.' }, { status: 403 });
       }

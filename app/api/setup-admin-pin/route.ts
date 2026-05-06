@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServer } from '@/lib/supabase';
 import { makeStoredPin } from '@/lib/pin';
+import { sanitizeToken, sanitizePin } from '@/lib/sanitize';
 
 // GET /api/setup-admin-pin?token=xxx — verify token is valid (for page load check)
 export async function GET(req: NextRequest) {
-  const token = req.nextUrl.searchParams.get('token')?.trim();
+  const token = sanitizeToken(req.nextUrl.searchParams.get('token'));
   if (!token) return NextResponse.json({ valid: false });
 
   const supabase = getSupabaseServer();
@@ -26,8 +27,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid body.' }, { status: 400 });
   }
 
-  const token = body.token?.trim();
-  const pin = body.pin?.trim();
+  const token = sanitizeToken(body.token);
+  const pin   = sanitizePin(body.pin);
 
   if (!token || !pin) return NextResponse.json({ error: 'Token and PIN are required.' }, { status: 400 });
   if (!/^\d{4}$/.test(pin)) return NextResponse.json({ error: 'PIN must be exactly 4 digits.' }, { status: 400 });

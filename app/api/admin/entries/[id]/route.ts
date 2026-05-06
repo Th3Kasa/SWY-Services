@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServer } from '@/lib/supabase';
 import { COOKIE_NAME, getAuthUserFromCookie } from '@/lib/auth';
 import { getServiceById } from '@/lib/services';
+import { sanitizeUuid, sanitizeString, sanitizeDate } from '@/lib/sanitize';
 
 function isAdmin(req: NextRequest): boolean {
   const raw = req.cookies.get(COOKIE_NAME)?.value;
@@ -13,6 +14,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (!isAdmin(req)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
+
+  const id = sanitizeUuid(params.id);
+  if (!id) return NextResponse.json({ error: 'Invalid entry ID.' }, { status: 400 });
 
   let body: { service_id?: string; date?: string; team?: string; what?: string };
   try {
@@ -30,18 +34,19 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     updates.service_id = body.service_id;
   }
   if (body.date !== undefined) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(body.date)) {
-      return NextResponse.json({ error: 'Date must be YYYY-MM-DD.' }, { status: 400 });
-    }
-    updates.date = body.date;
+    const date = sanitizeDate(body.date);
+    if (!date) return NextResponse.json({ error: 'Date must be a valid YYYY-MM-DD.' }, { status: 400 });
+    updates.date = date;
   }
   if (body.team !== undefined) {
-    if (!body.team.trim()) return NextResponse.json({ error: 'Team cannot be empty.' }, { status: 400 });
-    updates.team = body.team.trim();
+    const team = sanitizeString(body.team);
+    if (!team) return NextResponse.json({ error: 'Team cannot be empty.' }, { status: 400 });
+    updates.team = team;
   }
   if (body.what !== undefined) {
-    if (!body.what.trim()) return NextResponse.json({ error: 'Activity cannot be empty.' }, { status: 400 });
-    updates.what = body.what.trim();
+    const what = sanitizeString(body.what);
+    if (!what) return NextResponse.json({ error: 'Activity cannot be empty.' }, { status: 400 });
+    updates.what = what;
   }
 
   if (Object.keys(updates).length === 0) {
@@ -52,7 +57,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const { data, error } = await supabase
     .from('service_entries')
     .update(updates)
-    .eq('id', params.id)
+    .eq('id', id)
     .select()
     .single();
 
@@ -66,8 +71,11 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
+  const id = sanitizeUuid(params.id);
+  if (!id) return NextResponse.json({ error: 'Invalid entry ID.' }, { status: 400 });
+
   const supabase = getSupabaseServer();
-  const { error } = await supabase.from('service_entries').delete().eq('id', params.id);
+  const { error } = await supabase.from('service_entries').delete().eq('id', id);
 
   if (error) return NextResponse.json({ error: 'Failed to delete entry.' }, { status: 500 });
   return NextResponse.json({ success: true });

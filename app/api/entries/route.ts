@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServer } from '@/lib/supabase';
 import { getServiceById } from '@/lib/services';
 import { COOKIE_NAME, getAuthUserFromCookie } from '@/lib/auth';
+import { sanitizeString, sanitizeDate } from '@/lib/sanitize';
 
 // GET /api/entries?serviceId=monthly-outings
 // Returns entries for a service (or all entries if no serviceId param)
@@ -47,19 +48,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
   }
 
-  const { serviceId, date, team, what } = body;
+  const serviceId = sanitizeString(body.serviceId, 64);
+  const date      = sanitizeDate(body.date);
+  const team      = sanitizeString(body.team);
+  const what      = sanitizeString(body.what);
 
   // Validate
   if (!serviceId || !getServiceById(serviceId)) {
     return NextResponse.json({ error: 'Invalid service ID.' }, { status: 400 });
   }
-  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    return NextResponse.json({ error: 'Date is required (YYYY-MM-DD format).' }, { status: 400 });
+  if (!date) {
+    return NextResponse.json({ error: 'A valid date is required (YYYY-MM-DD).' }, { status: 400 });
   }
-  if (!team?.trim()) {
+  if (!team) {
     return NextResponse.json({ error: 'Team / who field is required.' }, { status: 400 });
   }
-  if (!what?.trim()) {
+  if (!what) {
     return NextResponse.json({ error: 'Activity description (what) is required.' }, { status: 400 });
   }
 
@@ -86,8 +90,8 @@ export async function POST(req: NextRequest) {
       .insert({
         service_id: serviceId,
         date,
-        team: team.trim(),
-        what: what.trim(),
+        team,
+        what,
         created_by_email: currentUser.email,
       })
       .select()
