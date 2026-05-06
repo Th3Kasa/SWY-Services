@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServer } from '@/lib/supabase';
 import { getServiceById } from '@/lib/services';
-import { COOKIE_NAME, AuthUser } from '@/lib/auth';
+import { COOKIE_NAME, getAuthUserFromCookie } from '@/lib/auth';
 
 // GET /api/entries?serviceId=monthly-outings
 // Returns entries for a service (or all entries if no serviceId param)
@@ -34,16 +34,9 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   // Auth check
   const cookieRaw = req.cookies.get(COOKIE_NAME)?.value;
-  if (!cookieRaw) {
+  const currentUser = getAuthUserFromCookie(cookieRaw);
+  if (!currentUser) {
     return NextResponse.json({ error: 'Not authenticated. Please sign in.' }, { status: 401 });
-  }
-
-  let currentUser: AuthUser;
-  try {
-    currentUser = JSON.parse(cookieRaw) as AuthUser;
-    if (!currentUser.name || !currentUser.email) throw new Error('Invalid cookie');
-  } catch {
-    return NextResponse.json({ error: 'Invalid session. Please sign in again.' }, { status: 401 });
   }
 
   // Parse body
