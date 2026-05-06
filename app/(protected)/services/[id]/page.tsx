@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { notFound } from 'next/navigation';
 import { getSupabaseServer, ServiceEntry } from '@/lib/supabase';
 import { getServiceById } from '@/lib/services';
