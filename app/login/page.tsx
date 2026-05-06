@@ -17,17 +17,28 @@ export default function LoginPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
 
-  // Check if the entered email belongs to an admin (to show PIN field)
+  // Check if the entered email belongs to an admin (to show PIN field).
+  // Also sends the name so the server can detect a name mismatch early.
   useEffect(() => {
     const email = form.email.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setIsAdmin(false); return; }
+    const parts = form.name.trim().split(/\s+/).filter(Boolean);
+    const nameStructurallyValid = parts.length >= 2 && parts.every((p) => p.length >= 2);
+    if (!nameStructurallyValid) { setIsAdmin(false); return; }
     let cancelled = false;
-    fetch(`/api/check-admin?email=${encodeURIComponent(email)}`)
+    const url = `/api/check-admin?email=${encodeURIComponent(email)}&name=${encodeURIComponent(form.name.trim())}`;
+    fetch(url)
       .then(r => r.json())
-      .then(d => { if (!cancelled) setIsAdmin(d.isAdmin === true); })
+      .then(d => {
+        if (cancelled) return;
+        setIsAdmin(d.isAdmin === true);
+        if (d.nameMismatch) {
+          setErrors((prev) => ({ ...prev, name: 'Wrong information. Please check your name and email.' }));
+        }
+      })
       .catch(() => { if (!cancelled) setIsAdmin(false); });
     return () => { cancelled = true; };
-  }, [form.email]);
+  }, [form.email, form.name]);
 
   // Show reCAPTCHA only when all fields are fully valid
   const nameValid = (() => {
