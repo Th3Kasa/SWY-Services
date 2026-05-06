@@ -688,32 +688,35 @@ export function AdminClient({ adminName, userNames }: { adminName: string; userN
 function TestReminderCard() {
   const [status, setStatus] = useState<'idle' | 'sending' | 'ok' | 'error' | 'info'>('idle');
   const [message, setMessage] = useState('');
-  const [details, setDetails] = useState<any>(null);
   const [recipient, setRecipient] = useState('');
 
   async function handleTest() {
     setStatus('sending');
     setMessage('');
-    setDetails(null);
-    const res = await fetch('/api/admin/test-reminder', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(recipient.trim() ? { to: recipient.trim() } : {}),
-    });
-    const json = await res.json();
-    setDetails(json);
+    try {
+      const res = await fetch('/api/admin/test-reminder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(recipient.trim() ? { to: recipient.trim() } : {}),
+      });
+      const json = await res.json();
 
-    if (!res.ok) {
+      if (!res.ok) {
+        setStatus('error');
+        setMessage(json.error ?? 'Unknown error');
+        return;
+      }
+      if (json.ok) {
+        setStatus('ok');
+        const list = json.services?.length ? ` (${json.services.join(', ')})` : '';
+        setMessage(`Sent ${json.sentCount} test reminder${json.sentCount === 1 ? '' : 's'} to ${json.sentTo}${list}. Check your inbox.`);
+      } else {
+        setStatus('info');
+        setMessage(json.reason ?? 'No eligible entries.');
+      }
+    } catch {
       setStatus('error');
-      setMessage(json.error ?? 'Unknown error');
-      return;
-    }
-    if (json.ok) {
-      setStatus('ok');
-      setMessage(`Test reminder sent to ${json.sentTo}. Check your inbox.`);
-    } else {
-      setStatus('info');
-      setMessage(json.reason ?? 'No eligible entries.');
+      setMessage('Network error. Please try again.');
     }
   }
 
@@ -721,18 +724,15 @@ function TestReminderCard() {
     <div className="bg-white rounded-xl border border-stone-200 p-5">
       <h3 className="text-sm font-semibold text-stone-700 mb-1">Test Reminder System</h3>
       <p className="text-xs text-stone-400 mb-4">
-        Simulates the daily cron — looks for entries dated <strong>5 days from today</strong> and sends a test reminder.
-        Without a verified Resend domain, you can only send to the email that owns your Resend account.
+        Sends a sample reminder email — identical to the real one — for any entry dated <strong>5 days from today</strong>.
       </p>
-      <div className="flex flex-col sm:flex-row gap-2 mb-3">
-        <input
-          type="email"
-          placeholder="Send test to (defaults to your admin email)"
-          value={recipient}
-          onChange={e => setRecipient(e.target.value)}
-          className="flex-1 border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-        />
-      </div>
+      <input
+        type="email"
+        placeholder="Send to… (defaults to your admin email)"
+        value={recipient}
+        onChange={e => setRecipient(e.target.value)}
+        className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 mb-3"
+      />
       <button
         onClick={handleTest}
         disabled={status === 'sending'}
@@ -743,11 +743,6 @@ function TestReminderCard() {
       {status === 'ok' && <p className="text-green-600 text-xs font-medium mt-3">✅ {message}</p>}
       {status === 'info' && <p className="text-amber-600 text-xs mt-3">ℹ️ {message}</p>}
       {status === 'error' && <p className="text-red-500 text-xs mt-3">❌ {message}</p>}
-      {details && (
-        <pre className="mt-3 bg-stone-50 border border-stone-200 rounded-lg p-3 text-[10px] text-stone-600 overflow-auto max-h-64">
-{JSON.stringify(details, null, 2)}
-        </pre>
-      )}
     </div>
   );
 }
