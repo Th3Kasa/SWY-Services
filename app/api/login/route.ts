@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServer } from '@/lib/supabase';
 import { COOKIE_NAME, serializeAuthCookie } from '@/lib/auth';
 import { verifyPin } from '@/lib/pin';
-import { sanitizeName, sanitizeEmail, sanitizePin, sanitizeToken } from '@/lib/sanitize';
+import { sanitizeName, sanitizeEmail, sanitizePin, sanitizeCaptchaToken } from '@/lib/sanitize';
 
 const ADMIN_EMAIL = 'basemmorkos98@gmail.com';
 
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     const name  = toTitleCase(sanitizeName(body.name));
     const email = sanitizeEmail(body.email);
     const pin   = sanitizePin(body.pin);
-    const captchaToken = sanitizeToken(body.captchaToken);
+    const captchaToken = sanitizeCaptchaToken(body.captchaToken);
 
     if (!name) {
       return NextResponse.json({ error: 'Full name is required' }, { status: 400 });

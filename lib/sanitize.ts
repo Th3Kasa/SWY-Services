@@ -3,7 +3,8 @@
 const MAX_NAME    = 100;
 const MAX_EMAIL   = 254;  // RFC 5321 limit
 const MAX_TEXT    = 1000; // team / what fields
-const MAX_TOKEN   = 128;  // invite / captcha tokens
+const MAX_TOKEN        = 128;   // invite tokens (hex, short)
+const MAX_CAPTCHA_TOKEN = 4096; // reCAPTCHA tokens are JWT-like, can be 1000+ chars
 
 // Strip ASCII control characters (keep tab, newline, carriage return for text fields).
 function stripControl(s: string): string {
@@ -33,10 +34,19 @@ export function sanitizePin(s: unknown): string {
   return s.replace(/\D/g, '').slice(0, 8);
 }
 
-/** Invite / captcha tokens: only alphanumeric + dashes, cap length. */
+/** Invite tokens: hex only (randomBytes output), cap at 128 chars. */
 export function sanitizeToken(s: unknown): string {
   if (typeof s !== 'string') return '';
   return s.replace(/[^a-zA-Z0-9\-_]/g, '').slice(0, MAX_TOKEN);
+}
+
+/**
+ * reCAPTCHA tokens: base64url + dots (JWT-like), up to 4096 chars.
+ * Strips control chars and anything outside the expected alphabet.
+ */
+export function sanitizeCaptchaToken(s: unknown): string {
+  if (typeof s !== 'string') return '';
+  return s.replace(/[^a-zA-Z0-9\-_.~+/=]/g, '').slice(0, MAX_CAPTCHA_TOKEN);
 }
 
 /**
