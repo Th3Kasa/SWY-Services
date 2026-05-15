@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Calendar, Users } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { ServiceConfig } from '@/lib/services';
 
 interface DashboardClientProps {
@@ -91,11 +90,6 @@ export function DashboardClient({ services, counts }: DashboardClientProps) {
                         {service.name}
                       </h2>
                     </div>
-                    <Badge
-                      className="bg-amber-100 text-amber-700 border-0 shrink-0 mt-1"
-                    >
-                      {service.frequency}
-                    </Badge>
                   </div>
 
                   {/* Leader */}
